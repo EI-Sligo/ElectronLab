@@ -1,0 +1,308 @@
+/* RESET */
+body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; overflow: hidden; }
+
+/* SIDEBAR */
+#sidebar { width: 280px; min-width: 280px; background: #ffffff; border-right: 1px solid #cbd5e1; display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 15px rgba(0,0,0,0.05); }
+
+.header { padding: 20px; background: #0f172a; color: white; border-bottom: 1px solid #1e293b; }
+.header h1 { margin: 0; font-size: 18px; }
+
+/* TABS */
+.sidebar-tabs { display: flex; border-bottom: 1px solid #cbd5e1; }
+.tab-btn { flex: 1; padding: 10px; background: #f1f5f9; border: none; cursor: pointer; font-weight: bold; color: #64748b; border-bottom: 2px solid transparent; }
+.tab-btn:hover { background: #e2e8f0; }
+.tab-btn.active { background: #fff; color: #2563eb; border-bottom: 2px solid #2563eb; }
+.tab-content { display: none; flex: 1; overflow-y: auto; padding: 15px; }
+.tab-content.active { display: block; }
+
+/* PALETTE */
+.palette-section h3 { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 15px 0 8px 0; letter-spacing: 0.5px; }
+.palette-btn {
+    display: block; width: 100%; padding: 10px 12px; margin-bottom: 6px;
+    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;
+    cursor: pointer; text-align: left; font-weight: 600; color: #334155; font-size: 13px;
+    transition: all 0.1s ease;
+}
+.palette-btn:hover { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+
+/* LEVELS */
+.level-item { padding: 10px; border: 1px solid #e2e8f0; margin-bottom: 8px; border-radius: 6px; cursor: pointer; background: #fff; transition: all 0.1s; }
+.level-item:hover { border-color: #2563eb; background: #eff6ff; }
+.level-title { font-weight: bold; font-size: 13px; color: #1e293b; }
+.level-desc { font-size: 11px; color: #64748b; margin-top: 4px; line-height: 1.4; }
+/* Level Editor Specifics */
+.level-controls {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.level-controls .btn-secondary {
+    font-size: 11px;
+    padding: 6px;
+    background: #f8fafc;
+}
+.level-controls .btn-secondary:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* METER */
+.meter-panel { padding: 15px; background: #334155; color: white; border-top: 4px solid #facc15; }
+#meter-display { 
+    background: #9ca3af; color: black; font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; 
+    padding: 10px; border-radius: 4px; text-align: right; border: 3px solid #1f2937; margin-bottom: 10px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+}
+.meter-controls { display: flex; gap: 5px; }
+.meter-controls button { flex: 1; padding: 8px 5px; cursor: pointer; background: #475569; color: #cbd5e1; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; transition: background 0.1s; }
+.meter-controls button:hover { background: #64748b; color: white; }
+.meter-controls button.active { background: #facc15; color: black; box-shadow: 0 0 5px rgba(250, 204, 21, 0.5); }
+
+/* CONTROLS */
+.controls { padding: 15px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+.control-label { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 4px; }
+#cable-select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 10px; font-weight: 600; color: #334155; }
+
+#btn-power { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 8px; transition: background 0.2s; }
+#btn-power.active { background: #ef4444; }
+.btn-secondary { width: 100%; padding: 8px; background: #fff; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.1s; }
+.btn-secondary:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+
+/* MAIN CANVAS AREA */
+#main { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    background-color: #f1f5f9; 
+}
+#toolbar { 
+    height: 40px; 
+    background: white; 
+    border-bottom: 1px solid #cbd5e1; 
+    display: flex; 
+    align-items: center; 
+    padding: 0 20px; 
+    justify-content: space-between; 
+}
+.toolbar-left {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    align-items: center;
+}
+#btn-move:hover, #btn-wire-order:hover { 
+    background: #f8fafc; 
+    border-color: #94a3b8; 
+    color: #1e293b;
+}
+#hint-text { font-size: 11px; color: #94a3b8; font-weight: 500; }
+#btn-move.active, #btn-wire-order.active { 
+    background: #eff6ff; 
+    border-color: #2563eb; 
+    color: #2563eb; 
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+#hint-text { font-size: 11px; color: #94a3b8; font-weight: 500; }
+
+canvas { display: block; flex: 1; cursor: crosshair; }
+.move-active canvas { cursor: move !important; }
+
+/* MODAL */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+.modal-box { padding: 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; }
+.close-modal { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+.close-modal:hover { color: white; }
+
+/* --- PLC Ladder Editor Styles (COMPACT) --- */
+#ladder-container {
+    background: #f8fafc;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    height: 350px; /* Fixed height */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.ladder-rung {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    height: 60px; /* Fixed Rung Height */
+    flex-shrink: 0;
+}
+
+.power-rail-left, .power-rail-right {
+    width: 6px;
+    height: 100%;
+    background: #dc2626; 
+}
+.power-rail-right { background: #0f172a; }
+
+.ladder-slots-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    position: relative;
+    padding: 0 10px;
+}
+
+/* The horizontal wire */
+.ladder-wire-line {
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 2px;
+    background: #334155;
+    z-index: 0;
+}
+
+.ladder-slot {
+    width: 45px; /* Smaller Slot */
+    height: 45px;
+    background: #f1f5f9;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: bold;
+    color: #334155;
+    transition: all 0.1s;
+}
+
+.ladder-slot:hover { border-color: #2563eb; background: #dbeafe; }
+.ladder-slot.configured { border: 1px solid #475569; background: #fff; }
+
+.ladder-svg {
+    width: 28px; /* Smaller Icons */
+    height: 28px;
+    stroke: #000;
+    stroke-width: 2px;
+    fill: none;
+    display: block;
+}
+.ladder-svg.nc-bar { stroke: #dc2626; }
+/* --- Scenario List Styling --- */
+
+.level-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Keep existing styles */
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Ensure clicking the item loads it */
+.level-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.level-info {
+    flex: 1; /* Takes up available space */
+}
+
+/* New Action Button Container */
+.level-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+/* Icon Buttons (Edit/Delete) */
+.icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s, background 0.2s;
+}
+
+.icon-btn:hover {
+    opacity: 1;
+    background: #e2e8f0;
+}
+
+.delete-btn:hover {
+    background: #fee2e2; /* Light red hover */
+}
+/* --- SCORM MODE: HIDE BUILDER TOOLS --- */
+
+/* Hide the tabs so they can't switch away from the task */
+.sidebar-tabs { display: none !important; }
+
+/* Hide the Save/Load/Clear buttons */
+/* Hide the Save/Load/Clear buttons */
+/* .controls .btn-secondary { display: none !important; }  <-- DELETED or COMMENTED OUT */
+.controls .btn-secondary { display: block; } /* Optional: Force show */
+
+/* Hide the Level Editor controls (Create, Import, Export) */
+.level-controls { display: none !important; }
+
+/* Hide the Edit/Delete icons on the level list */
+.level-actions { display: none !important; }
+
+/* Add a Submit Button Style */
+#btn-submit-task {
+    width: 100%;
+    padding: 15px;
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    margin-top: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+#btn-submit-task:hover { background: #1d4ed8; }
+/* CONTEXT MENU */
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #cbd5e1;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    z-index: 2000;
+    min-width: 150px;
+    overflow: hidden;
+}
+
+.context-menu div {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.context-menu div:last-child { border-bottom: none; }
+.context-menu div:hover { background: #f8fafc; color: #2563eb; }
+
+/* Fault Mode Button Active State */
+#btn-fault.active {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #f59e0b;
+}

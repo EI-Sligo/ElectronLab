@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroLab v3.0 - Professional</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header">
+            <h1>⚡ ElectroLab v3</h1>
+        </div>
+        
+        <div class="sidebar-tabs">
+            <button id="btn-tab-components" class="tab-btn active" onclick="App.switchTab('components')">Components</button>
+            <button id="btn-tab-levels" class="tab-btn" onclick="App.switchTab('levels')">Levels</button>
+        </div>
+        
+        <div id="tab-components" class="palette-scroll tab-content active">
+            
+            <div class="palette-section">
+                <h3>🏠 Meter Cabinet & Board</h3>
+                <button class="palette-btn" onclick="App.addComponent('service_head')">Mains Cut-out (Fuse)</button>
+                <button class="palette-btn" onclick="App.addComponent('main_switch_100a')">Main Switch 100A</button>
+                <button class="palette-btn" onclick="App.addComponent('rcd')">Main RCD (80A 30mA)</button>
+                <button class="palette-btn" onclick="App.addComponent('db_board')">Distribution Board</button>
+                <button class="palette-btn" onclick="App.addComponent('timer_hager')">Hager Digital Timer</button>
+                <button class="palette-btn" onclick="App.addComponent('earth_bar')">Earth Bar</button>
+                <button class="palette-btn" onclick="App.addComponent('neutral_bar')">Neutral Bar</button>
+            </div>
+
+            <div class="palette-section">
+                <h3>🛡️ RCBOs (Slimline)</h3>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b6')">RCBO B6 (Lighting)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b10')">RCBO B10 (Lighting)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b16')">RCBO B16 (Immersion)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b20')">RCBO B20 (Sockets)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b32')">RCBO B32 (Ring/Cooker)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b40')">RCBO B40 (Shower)</button>
+                <button class="palette-btn" onclick="App.addComponent('rcbo_b50')">RCBO B50 (Shower)</button>
+            </div>
+
+            <div class="palette-section">
+                <h3>⚡ MCBs (Standard)</h3>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b6')">MCB B6</button>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b10')">MCB B10</button>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b16')">MCB B16</button>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b20')">MCB B20</button>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b32')">MCB B32</button>
+                <button class="palette-btn" onclick="App.addComponent('mcb_b40')">MCB B40</button>
+            </div>
+
+            <div class="palette-section">
+                <h3>💡 Switches & Accessories</h3>
+                <button class="palette-btn" onclick="App.addComponent('sw_1way')">Switch 1-Way</button>
+                <button class="palette-btn" onclick="App.addComponent('sw_2way')">Switch 2-Way</button>
+                <button class="palette-btn" onclick="App.addComponent('sw_inter')">Intermediate Switch</button>
+                <button class="palette-btn" onclick="App.addComponent('lamp')">Ceiling Rose / Lamp</button>
+                <button class="palette-btn" onclick="App.addComponent('socket')">Twin Socket</button>
+                <button class="palette-btn" onclick="App.addComponent('fcu_switched')">Fused Spur (FCU)</button>
+                <button class="palette-btn" onclick="App.addComponent('junction_box')">Junction Box</button>
+                <button class="palette-btn" onclick="App.addComponent('smoke_alarm')">Smoke Alarm</button>
+            </div>
+
+            <div class="palette-section">
+                <h3>🍳 High Power Loads</h3>
+                <button class="palette-btn" onclick="App.addComponent('cooker_sw')">Cooker Switch</button>
+                <button class="palette-btn" onclick="App.addComponent('sw_sink_bath')">Immersion Switch</button>
+                <button class="palette-btn" onclick="App.addComponent('immersion_dual')">Dual Immersion Tank</button>
+                <button class="palette-btn" onclick="App.addComponent('fan')">Extractor Fan</button>
+            </div>
+
+        </div>
+
+        <div id="tab-levels" class="tab-content">
+            <div id="level-list-container"></div>
+        </div>
+
+        <div class="meter-panel">
+            <div id="meter-display">---</div>
+            <div class="meter-controls">
+                <button id="btn-meter-v" onclick="Meter.setMode('volts')">V~</button>
+                <button id="btn-meter-o" onclick="Meter.setMode('ohms')">Ω</button>
+                <button id="btn-meter-m" onclick="Meter.setMode('megger')">MΩ</button>
+                <button id="btn-meter-off" onclick="Meter.setMode('off')" class="active">OFF</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <label class="control-label">Wire Type / Colour:</label>
+            <select id="cable-select" onchange="App.setCable(this.value)">
+                <optgroup label="Standard Twin & Earth (Live)">
+                    <option value="1.0">1.0 mm² </option>
+                    <option value="1.5">1.5 mm² </option>
+                    <option value="2.5" selected>2.5 mm² </option>
+                    <option value="4.0">4.0 mm² </option>
+                    <option value="6.0">6.0 mm² </option>
+                    <option value="10.0">10.0 mm² </option>
+                    <option value="16.0">16.0 mm² </option>
+                    <option value="25.0">25.0 mm² </option>
+                </optgroup>
+            </select>
+
+            <button id="btn-power" onclick="App.togglePower()">🔌 Power ON</button>
+            
+            <div style="display:flex; gap:5px;">
+                <button class="btn-secondary" onclick="App.saveState()">💾 Save to File</button>
+                <button class="btn-secondary" onclick="App.loadState()">📂 Open File</button>
+                <button class="btn-secondary" onclick="App.clear()">🗑️ Clear</button>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                <p style="font-size: 11px; color: #64748b; margin-bottom: 5px;">
+                    <strong>Step 1:</strong> Save your file above.<br>
+                    <strong>Step 2:</strong> Click below to mark complete.
+                </p>
+                <button id="btn-submit-task" onclick="finishScenario()">✅ Submit Task</button>
+            </div>
+        </div>
+    </div> 
+
+    <div id="main">
+        <div id="toolbar">
+            <div class="toolbar-left">
+                <button id="btn-move" onclick="App.toggleMoveMode()">✋ Move Mode: OFF</button>
+                <button id="btn-fault" onclick="App.toggleFaultMode()">⚠️ Fault Mode: OFF</button>
+                <button id="btn-wire-order" onclick="App.toggleWireOrder()">🔃 Wires: BACK</button>
+            </div>
+            <div id="hint-text">Right-click components for options. Hover wires for size.</div>
+        </div>
+
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div id="prop-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="margin-top:0;">Component Properties</h3>
+            
+            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px;">Label:</label>
+            <input type="text" id="prop-label" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+            
+            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px;">Fault Condition:</label>
+            <select id="prop-fault" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                <option value="none">None (Normal)</option>
+                <option value="open">Open Circuit (Break)</option>
+                <option value="short_ln">Short Circuit (L-N)</option>
+                <option value="earth_le">Earth Fault (L-E)</option>
+                <option value="open_N">Open Neutral</option>
+            </select>
+            
+            <div style="text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="document.getElementById('prop-modal').style.display='none'" style="padding:8px 12px; background:#e2e8f0; border:none; border-radius:4px; cursor:pointer;">Cancel</button>
+                <button onclick="App.saveProperty()" style="padding:8px 12px; background:#2563eb; color:white; border:none; border-radius:4px; cursor:pointer;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="plc-modal" class="modal" onclick="closePLCModal()">
+        <div class="modal-box" style="width: 550px; background:#1e293b; color:white;" onclick="event.stopPropagation()">
+            <button class="close-modal" onclick="closePLCModal()" style="color:white;">×</button>
+            <h3 style="margin-top:0; color:#facc15;">💻 PLC Ladder Logic Editor</h3>
+            <div id="ladder-container"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                <button class="btn-secondary" onclick="closePLCModal()" style="background:#334155; color:white; border:none; padding: 8px 16px; border-radius: 4px; cursor:pointer;">Cancel</button>
+                <button class="btn-power" onclick="savePLCLogic()" style="background:#22c55e; color:white; border:none; padding: 8px 16px; border-radius: 4px; cursor:pointer; font-weight:bold;">💾 Download Program to PLC</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="context-menu" class="context-menu" style="display:none;">
+        <div onclick="App.contextAction('prop')">🔧 Properties / Faults</div>
+        <div onclick="App.contextAction('delete')" style="color:#ef4444;">🗑️ Delete Component</div>
+    </div>
+
+    <script src="data/levels.js"></script>
+    <script src="core/engine.js"></script>
+    <script src="core/renderer.js"></script>
+    <script src="core/interaction.js"></script>
+    <script src="core/meter.js"></script>
+    
+    <script src="components/domestic.js"></script>
+
+    <script src="scorm.js"></script> 
+    <script src="main.js"></script>
+</body>
+</html>
