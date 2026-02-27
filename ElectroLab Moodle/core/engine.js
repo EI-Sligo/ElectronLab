@@ -31,32 +31,24 @@ const Engine = {
     },
 
     addWire: (id1, term1, id2, term2, size) => {
-        let color = '#b45309'; 
-        const isNeutral = (t) => t === 'N' || t === 'Neg' || t === 'X2' || (t.startsWith('N') && !t.startsWith('NO') && !t.startsWith('NC'));
-        const isEarth = (t) => t.startsWith('E');
+     let color = '#94a3b8'; // Default grey
 
-        if (size === 'phase_l2') color = '#000000';      
-        else if (size === 'phase_l3') color = '#9ca3af'; 
-        else if (size === 'neutral') color = '#1d4ed8';  
-        else if (size === 'earth') color = '#16a34a';    
-        else if (size === 'control_pos') color = '#dc2626'; 
-        else if (size === 'control_neg') color = '#1e3a8a'; 
-        else {
-            if (isEarth(term1) || isEarth(term2)) color = '#16a34a';
-            else if (isNeutral(term1) || isNeutral(term2)) color = '#1d4ed8';
-            else if (term1.includes('L2') || term2.includes('L2')) color = '#000000';
-            else if (term1.includes('L3') || term2.includes('L3')) color = '#9ca3af';
-        }
-        
-        Engine.wires.push({ startComp: id1, startTerm: term1, endComp: id2, endTerm: term2, size: size, color: color });
-    },
+     // Map the drop-down values to actual drawing colors
+     if (size === 'red') color = '#ef4444';      
+     else if (size === 'black') color = '#1f2937'; 
+     else if (size === 'blue') color = '#3b82f6';  
+     else if (size === 'yellow') color = '#eab308';    
+     else if (size === 'green') color = '#22c55e'; 
+
+     Engine.wires.push({ startComp: id1, startTerm: term1, endComp: id2, endTerm: term2, size: size, color: color });
+ },
 
     isLive: (compId, termId) => Engine.liveSet.has(`${compId}:${termId}`),
 
     getPotential: (compId, termId) => {
         if (!Engine.liveSet.has(`${compId}:${termId}`)) return 0;
         if (termId.includes('Pos') || termId.includes('Neg') || termId === '13' || termId === '14' || termId === 'A1' || termId.startsWith('I') || termId.startsWith('Q')) return 24;
-        return 230;
+        return 9;
     },
 
     getPathsWithFaults: (comp) => {

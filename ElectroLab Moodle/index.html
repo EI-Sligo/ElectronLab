@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ElectroLab v3.0 - Professional</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ElectronLab v1.0 - Professional</title>
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
     <div id="sidebar">
         <div class="header">
-            <h1>⚡ ElectroLab v3</h1>
+            <h1>⚡ ElectronLab v1</h1>
         </div>
         
         <div class="sidebar-tabs">
@@ -18,89 +18,74 @@
             <button id="btn-tab-levels" class="tab-btn" onclick="App.switchTab('levels')">Levels</button>
         </div>
         
-        <div id="tab-components" class="palette-scroll tab-content active">
+        <div id="tab-components" class="tab-content active">
             
             <div class="palette-section">
-                <h3>🏠 Meter Cabinet & Board</h3>
-                <button class="palette-btn" onclick="App.addComponent('service_head')">Mains Cut-out (Fuse)</button>
-                <button class="palette-btn" onclick="App.addComponent('main_switch_100a')">Main Switch 100A</button>
-                <button class="palette-btn" onclick="App.addComponent('rcd')">Main RCD (80A 30mA)</button>
-                <button class="palette-btn" onclick="App.addComponent('db_board')">Distribution Board</button>
-                <button class="palette-btn" onclick="App.addComponent('timer_hager')">Hager Digital Timer</button>
-                <button class="palette-btn" onclick="App.addComponent('earth_bar')">Earth Bar</button>
-                <button class="palette-btn" onclick="App.addComponent('neutral_bar')">Neutral Bar</button>
+                <h3>🔋 Power & Sources</h3>
+                <button class="palette-btn" onclick="App.addComponent('battery_9v')">9V Battery (DC)</button>
+                <button class="palette-btn" onclick="App.addComponent('psu_5v')">5V Logic Power Supply</button>
+                <button class="palette-btn" onclick="App.addComponent('ac_source')">AC Signal Generator</button>
             </div>
 
             <div class="palette-section">
-                <h3>🛡️ RCBOs (Slimline)</h3>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b6')">RCBO B6 (Lighting)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b10')">RCBO B10 (Lighting)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b16')">RCBO B16 (Immersion)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b20')">RCBO B20 (Sockets)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b32')">RCBO B32 (Ring/Cooker)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b40')">RCBO B40 (Shower)</button>
-                <button class="palette-btn" onclick="App.addComponent('rcbo_b50')">RCBO B50 (Shower)</button>
+                <h3>🛠️ Prototyping Boards</h3>
+                <button class="palette-btn" style="background:#fef3c7; border-color:#d97706;" onclick="App.addComponent('trackboard')">Stripboard / Veroboard</button>
             </div>
 
             <div class="palette-section">
-                <h3>⚡ MCBs (Standard)</h3>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b6')">MCB B6</button>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b10')">MCB B10</button>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b16')">MCB B16</button>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b20')">MCB B20</button>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b32')">MCB B32</button>
-                <button class="palette-btn" onclick="App.addComponent('mcb_b40')">MCB B40</button>
+                <h3>💡 Output & Switches</h3>
+                <button class="palette-btn" onclick="App.addComponent('push_button')">Push Button</button>
+                <button class="palette-btn" onclick="App.addComponent('switch_toggle')">Toggle Switch (SPST)</button>
+                <button class="palette-btn" onclick="App.addComponent('led_red')">LED (Red)</button>
+                <button class="palette-btn" onclick="App.addComponent('lamp_filament')">Filament Lamp</button>
+                <button class="palette-btn" onclick="App.addComponent('buzzer')">Buzzer</button>
             </div>
 
             <div class="palette-section">
-                <h3>💡 Switches & Accessories</h3>
-                <button class="palette-btn" onclick="App.addComponent('sw_1way')">Switch 1-Way</button>
-                <button class="palette-btn" onclick="App.addComponent('sw_2way')">Switch 2-Way</button>
-                <button class="palette-btn" onclick="App.addComponent('sw_inter')">Intermediate Switch</button>
-                <button class="palette-btn" onclick="App.addComponent('lamp')">Ceiling Rose / Lamp</button>
-                <button class="palette-btn" onclick="App.addComponent('socket')">Twin Socket</button>
-                <button class="palette-btn" onclick="App.addComponent('fcu_switched')">Fused Spur (FCU)</button>
-                <button class="palette-btn" onclick="App.addComponent('junction_box')">Junction Box</button>
-                <button class="palette-btn" onclick="App.addComponent('smoke_alarm')">Smoke Alarm</button>
+                <h3>〰️ Passive Components</h3>
+                <button class="palette-btn" onclick="App.addComponent('resistor')">Resistor (Fixed)</button>
+                <button class="palette-btn" onclick="App.addComponent('potentiometer')">Potentiometer (Variable)</button>
+                <button class="palette-btn" onclick="App.addComponent('capacitor')">Capacitor (10μF)</button>
+                <button class="palette-btn" onclick="App.addComponent('inductor')">Inductor (Coil)</button>
+                <button class="palette-btn" onclick="App.addComponent('transformer_ct')">Transformer (Centre-Tap)</button>
             </div>
 
             <div class="palette-section">
-                <h3>🍳 High Power Loads</h3>
-                <button class="palette-btn" onclick="App.addComponent('cooker_sw')">Cooker Switch</button>
-                <button class="palette-btn" onclick="App.addComponent('sw_sink_bath')">Immersion Switch</button>
-                <button class="palette-btn" onclick="App.addComponent('immersion_dual')">Dual Immersion Tank</button>
-                <button class="palette-btn" onclick="App.addComponent('fan')">Extractor Fan</button>
+                <h3>⚡ Semiconductors</h3>
+                <button class="palette-btn" onclick="App.addComponent('diode')">Rectifier Diode (1N4007)</button>
+                <button class="palette-btn" onclick="App.addComponent('zener_diode')">Zener Diode</button>
+                <button class="palette-btn" onclick="App.addComponent('transistor_npn')">NPN Transistor</button>
+                <button class="palette-btn" onclick="App.addComponent('transistor_pnp')">PNP Transistor</button>
             </div>
 
-        </div>
+            <div class="palette-section">
+                <h3>💻 Digital Logic (74 Series)</h3>
+                <button class="palette-btn" onclick="App.addComponent('logic_and')">AND Gate (7408)</button>
+                <button class="palette-btn" onclick="App.addComponent('logic_or')">OR Gate (7432)</button>
+                <button class="palette-btn" onclick="App.addComponent('logic_not')">NOT Gate (7404)</button>
+            </div>
 
-        <div id="tab-levels" class="tab-content">
+        </div> <div id="tab-levels" class="tab-content">
             <div id="level-list-container"></div>
         </div>
 
         <div class="meter-panel">
             <div id="meter-display">---</div>
             <div class="meter-controls">
-                <button id="btn-meter-v" onclick="Meter.setMode('volts')">V~</button>
+                <button id="btn-meter-v" onclick="Meter.setMode('volts')">V DC</button>
                 <button id="btn-meter-o" onclick="Meter.setMode('ohms')">Ω</button>
-                <button id="btn-meter-m" onclick="Meter.setMode('megger')">MΩ</button>
                 <button id="btn-meter-off" onclick="Meter.setMode('off')" class="active">OFF</button>
             </div>
         </div>
 
         <div class="controls">
-            <label class="control-label">Wire Type / Colour:</label>
+            <label class="control-label">Jumper Wire Color:</label>
             <select id="cable-select" onchange="App.setCable(this.value)">
-                <optgroup label="Standard Twin & Earth (Live)">
-                    <option value="1.0">1.0 mm² </option>
-                    <option value="1.5">1.5 mm² </option>
-                    <option value="2.5" selected>2.5 mm² </option>
-                    <option value="4.0">4.0 mm² </option>
-                    <option value="6.0">6.0 mm² </option>
-                    <option value="10.0">10.0 mm² </option>
-                    <option value="16.0">16.0 mm² </option>
-                    <option value="25.0">25.0 mm² </option>
-                </optgroup>
+                <option value="red" selected>Red (Power)</option>
+                <option value="black">Black (Ground)</option>
+                <option value="blue">Blue (Signal)</option>
+                <option value="yellow">Yellow (Signal)</option>
+                <option value="green">Green (Signal)</option>
             </select>
 
             <button id="btn-power" onclick="App.togglePower()">🔌 Power ON</button>
@@ -180,7 +165,7 @@
     <script src="core/interaction.js"></script>
     <script src="core/meter.js"></script>
     
-    <script src="components/domestic.js"></script>
+    <script src="components/electronics.js"></script>
 
     <script src="scorm.js"></script> 
     <script src="main.js"></script>

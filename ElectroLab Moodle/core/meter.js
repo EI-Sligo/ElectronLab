@@ -62,7 +62,7 @@ const Meter = {
             const diff = Math.abs(v1 - v2);
             if(diff > 0) {
                 // Reduced Jitter range for stability
-                el.innerText = (diff - 0.5 + Math.random()).toFixed(0) + " V";
+                el.innerText = diff.toFixed(2) + " V";
             } else {
                 el.innerText = "0 V";
             }

@@ -128,9 +128,17 @@ const Interaction = {
             return;
         } 
         
-        // 5. COMPONENT INTERACTION (Switch Toggle) - Lowest Priority
+        // 5. COMPONENT INTERACTION (Custom Clicks & Switch Toggle)
         if(clicked && Interaction.mode === 'interact') {
             const def = ComponentRegistry[clicked.type];
+            
+            // Allow components to handle their own specific click coordinates (like cutting tracks)
+            if(def.onInteract) {
+                def.onInteract(clicked, x - clicked.x, y - clicked.y);
+                return;
+            }
+
+            // Default switch toggle logic
             if(def.hasSwitch) {
                 if(def.states) {
                     clicked.state.switchVal = (clicked.state.switchVal + 1) % def.states;
