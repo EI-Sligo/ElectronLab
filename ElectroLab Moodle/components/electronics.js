@@ -1,6 +1,83 @@
-/* ELECTRONICS COMPONENTS - ALIGNED TO PHASE 2 SYLLABUS */
+/* ELECTRONICS COMPONENTS - FULLY FLEXIBLE VERSION */
 
-// --- 1. POWER SOURCES ---
+// --- HELPER: Draw component body along a line ---
+const drawAxial = (ctx, x1, y1, x2, y2, color, label, type, state) => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx);
+    const mid = dist / 2;
+
+    ctx.save();
+    ctx.translate(x1, y1);
+    ctx.rotate(angle);
+
+    // 1. Draw Leads (Wires)
+    ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(dist, 0); ctx.stroke();
+
+    // 2. Draw Specific Component Symbols
+    if (type === 'resistor') {
+        tools.plasticRect(ctx, mid - 15, -5, 30, 10, "#d97706");
+        ctx.fillStyle = "#78350f"; ctx.fillRect(mid - 10, -5, 4, 10);
+        ctx.fillStyle = "#000"; ctx.fillRect(mid - 2, -5, 4, 10);
+        ctx.fillStyle = "#dc2626"; ctx.fillRect(mid + 6, -5, 4, 10);
+    } 
+    else if (type === 'diode') {
+        tools.plasticRect(ctx, mid - 10, -8, 20, 16, "#000");
+        ctx.fillStyle = "#cbd5e1"; ctx.fillRect(mid + 5, -8, 4, 16);
+    }
+    else if (type === 'zener') {
+        tools.plasticRect(ctx, mid - 10, -8, 20, 16, "#ef4444");
+        ctx.fillStyle = "#000"; ctx.fillRect(mid + 5, -8, 4, 16);
+    }
+    else if (type === 'capacitor') {
+        tools.plasticRect(ctx, mid - 10, -8, 20, 16, color);
+    }
+    else if (type === 'inductor') {
+        // Draw coils over the wire
+        ctx.fillStyle = "#f1f5f9"; ctx.strokeStyle = "#b45309"; ctx.lineWidth = 2;
+        for(let i=-15; i<=15; i+=6) {
+            ctx.beginPath(); ctx.arc(mid + i, -4, 6, 0, Math.PI); ctx.stroke(); // Coils
+        }
+    }
+    else if (type === 'lamp') {
+        ctx.translate(mid, 0);
+        ctx.shadowColor = state.lit ? "#facc15" : "transparent"; ctx.shadowBlur = state.lit ? 25 : 0;
+        tools.circle(ctx, 0, 0, 12, state.lit ? "#fef08a" : "#f1f5f9", "#cbd5e1"); ctx.shadowBlur = 0;
+        ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-6, -6); ctx.lineTo(6, 6); ctx.moveTo(6, -6); ctx.lineTo(-6, 6); ctx.stroke();
+        ctx.translate(-mid, 0);
+    }
+    else if (type === 'buzzer') {
+        ctx.translate(mid, 0);
+        tools.plasticRect(ctx, -12, -12, 24, 24, "#1f2937");
+        tools.circle(ctx, 0, 0, 6, "#000");
+        if (state.lit) tools.text(ctx, '((( )))', 0, -18, '#fbbf24', 10, "bold");
+        ctx.translate(-mid, 0);
+    }
+    else if (type === 'switch' || type === 'push') {
+        ctx.translate(mid, 0);
+        tools.plasticRect(ctx, -15, -10, 30, 20, "#e2e8f0");
+        if(type === 'push') {
+            tools.circle(ctx, 0, 0, 8, state.on ? "#dc2626" : "#ef4444", "#94a3b8");
+        } else {
+            ctx.fillStyle = "#334155"; ctx.fillRect(-5, -15, 10, 30);
+            ctx.fillStyle = state.on ? "#22c55e" : "#ef4444"; ctx.fillRect(-3, state.on ? -12 : -2, 6, 14);
+        }
+        ctx.translate(-mid, 0);
+    }
+
+    // 3. Label (keeps text upright)
+    if(label) {
+        ctx.translate(mid, -15);
+        if(angle > Math.PI/2 || angle < -Math.PI/2) { ctx.rotate(Math.PI); }
+        tools.text(ctx, label, 0, 0, '#334155', 10, "bold");
+    }
+
+    ctx.restore();
+};
+
+// --- 1. POWER SOURCES (Boxes remain fixed for stability) ---
 
 Engine.register({
     type: 'battery_9v', label: '9V Battery', role: 'source', size: { w: 60, h: 100 },
@@ -34,106 +111,135 @@ Engine.register({
     }
 });
 
-// --- 2. SWITCHES & OUTPUTS ---
+// --- 2. SWITCHES (Now Flexible!) ---
 
 Engine.register({
-    type: 'switch_toggle', label: 'Toggle Switch', role: 'switch', hasSwitch: true, size: { w: 40, h: 60 },
-    terminals: [ {id:'T1', x:20, y:10}, {id:'T2', x:20, y:50} ],
+    type: 'push_button', label: 'Push Button', role: 'switch', hasSwitch: true, flexible: true,
+    terminals: [ {id:'T1', x:0, y:0}, {id:'T2', x:72, y:0} ],
     getInternalPaths: (state) => state.on ? [['T1', 'T2']] : [],
     render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 0, 0, 40, 60, "#cbd5e1");
-        ctx.fillStyle = state.on ? "#22c55e" : "#ef4444";
-        ctx.fillRect(15, state.on ? 20 : 30, 10, 10);
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#e2e8f0", 'Push', 'push', state);
     }
 });
 
 Engine.register({
-    type: 'push_button', label: 'Push Button', role: 'switch', hasSwitch: true, size: { w: 40, h: 40 },
-    terminals: [ {id:'T1', x:10, y:20}, {id:'T2', x:30, y:20} ],
+    type: 'switch_toggle', label: 'Toggle Switch', role: 'switch', hasSwitch: true, flexible: true,
+    terminals: [ {id:'T1', x:0, y:0}, {id:'T2', x:72, y:0} ],
     getInternalPaths: (state) => state.on ? [['T1', 'T2']] : [],
     render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 0, 0, 40, 40, "#e2e8f0");
-        tools.circle(ctx, 20, 20, 12, state.on ? "#dc2626" : "#ef4444", "#94a3b8");
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#cbd5e1", 'SW', 'switch', state);
     }
 });
 
-Engine.register({
-    type: 'led_red', label: 'Red LED', role: 'load', size: { w: 40, h: 60 },
-    terminals: [ {id:'L', x:10, y:50, label:'A'}, {id:'N', x:30, y:50, label:'K'} ],
-    getInternalPaths: () => [],
-    render: (ctx, state, tools) => {
-        ctx.shadowColor = state.lit ? "#ef4444" : "transparent"; ctx.shadowBlur = state.lit ? 20 : 0;
-        tools.circle(ctx, 20, 20, 15, state.lit ? "#ef4444" : "#7f1d1d"); ctx.shadowBlur = 0;
-        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(10, 35); ctx.lineTo(10, 50); ctx.moveTo(30, 35); ctx.lineTo(30, 50); ctx.stroke();
-    }
-});
+// --- 3. PASSIVES (Flexible) ---
 
 Engine.register({
-    type: 'lamp_filament', label: 'Filament Lamp', role: 'load', size: { w: 50, h: 50 },
-    terminals: [ {id:'L', x:10, y:40}, {id:'N', x:40, y:40} ],
-    getInternalPaths: () => [],
-    render: (ctx, state, tools) => {
-        ctx.shadowColor = state.lit ? "#facc15" : "transparent"; ctx.shadowBlur = state.lit ? 25 : 0;
-        tools.circle(ctx, 25, 20, 15, state.lit ? "#fef08a" : "#f1f5f9", "#cbd5e1"); ctx.shadowBlur = 0;
-        tools.text(ctx, 'X', 25, 20, '#94a3b8', 16);
-    }
-});
-
-Engine.register({
-    type: 'buzzer', label: 'Buzzer', role: 'load', size: { w: 50, h: 50 },
-    terminals: [ {id:'L', x:10, y:40, label:'+'}, {id:'N', x:40, y:40, label:'-'} ],
-    getInternalPaths: () => [],
-    render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 0, 0, 50, 40, "#1f2937");
-        tools.circle(ctx, 25, 20, 8, "#000");
-        if (state.lit) tools.text(ctx, 'BZZZ!', 25, -10, '#fbbf24', 12, "bold");
-    }
-});
-
-// --- 3. PASSIVE COMPONENTS ---
-
-Engine.register({
-    type: 'resistor', label: 'Resistor', role: 'passive', size: { w: 60, h: 20 },
-    terminals: [ {id:'T1', x:0, y:10}, {id:'T2', x:60, y:10} ],
+    type: 'resistor', label: 'Resistor', role: 'passive', flexible: true,
+    terminals: [ {id:'T1', x:0, y:0}, {id:'T2', x:72, y:0} ],
     getInternalPaths: () => [['T1', 'T2']],
     render: (ctx, state, tools) => {
-        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(60, 10); ctx.stroke();
-        tools.plasticRect(ctx, 15, 2, 30, 16, "#d97706");
-        ctx.fillStyle = "#78350f"; ctx.fillRect(20, 2, 4, 16); ctx.fillStyle = "#000"; ctx.fillRect(28, 2, 4, 16); ctx.fillStyle = "#dc2626"; ctx.fillRect(36, 2, 4, 16);
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#d97706", state.value || '1kΩ', 'resistor', state);
     }
 });
 
 Engine.register({
-    type: 'potentiometer', label: 'Potentiometer', role: 'passive', size: { w: 50, h: 50 },
-    terminals: [ {id:'T1', x:10, y:40}, {id:'Wiper', x:25, y:40, label:'W'}, {id:'T2', x:40, y:40} ],
-    getInternalPaths: () => [['T1', 'Wiper'], ['Wiper', 'T2']],
-    render: (ctx, state, tools) => {
-        tools.circle(ctx, 25, 20, 18, "#334155");
-        tools.circle(ctx, 25, 20, 12, "#f1f5f9");
-        ctx.fillStyle = "#000"; ctx.fillRect(23, 8, 4, 12); // Dial line
-    }
-});
-
-Engine.register({
-    type: 'capacitor', label: 'Capacitor', role: 'passive', size: { w: 40, h: 40 },
-    terminals: [ {id:'T1', x:10, y:30}, {id:'T2', x:30, y:30} ],
-    getInternalPaths: () => [], // Blocks DC
-    render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 5, 5, 30, 20, "#3b82f6");
-        tools.text(ctx, '10μF', 20, 15, '#fff', 9);
-    }
-});
-
-Engine.register({
-    type: 'inductor', label: 'Inductor (Coil)', role: 'passive', size: { w: 60, h: 30 },
-    terminals: [ {id:'T1', x:0, y:15}, {id:'T2', x:60, y:15} ],
+    type: 'inductor', label: 'Inductor', role: 'passive', flexible: true,
+    terminals: [ {id:'T1', x:0, y:0}, {id:'T2', x:72, y:0} ],
     getInternalPaths: () => [['T1', 'T2']],
     render: (ctx, state, tools) => {
-        ctx.strokeStyle = "#b45309"; ctx.lineWidth = 3;
-        ctx.beginPath();
-        for(let i=1; i<=4; i++) { ctx.arc(10 + (i*8), 15, 6, Math.PI, 0); }
-        ctx.stroke();
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#b45309", '10mH', 'inductor', state);
+    }
+});
+
+Engine.register({
+    type: 'capacitor', label: 'Capacitor', role: 'passive', flexible: true,
+    terminals: [ {id:'T1', x:0, y:0, label:'+'}, {id:'T2', x:36, y:0, label:'-'} ],
+    getInternalPaths: () => [],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 36, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#3b82f6", state.value || '10μF', 'capacitor', state);
+    }
+});
+
+// --- 4. SEMICONDUCTORS (Flexible) ---
+
+Engine.register({
+    type: 'diode', label: 'Diode', role: 'passive', flexible: true,
+    terminals: [ {id:'A', x:0, y:0, label:'A'}, {id:'K', x:72, y:0, label:'K'} ],
+    getInternalPaths: () => [['A', 'K']],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#000", '1N4007', 'diode', state);
+    }
+});
+
+Engine.register({
+    type: 'zener_diode', label: 'Zener', role: 'passive', flexible: true,
+    terminals: [ {id:'A', x:0, y:0, label:'A'}, {id:'K', x:72, y:0, label:'K'} ],
+    getInternalPaths: () => [['A', 'K']],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#ef4444", '5.1V', 'zener', state);
+    }
+});
+
+Engine.register({
+    type: 'led_red', label: 'Red LED', role: 'load', flexible: true,
+    terminals: [ {id:'A', x:0, y:0, label:'A'}, {id:'K', x:36, y:0, label:'K'} ],
+    getInternalPaths: () => [],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 36, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#ef4444", '', 'led', state);
+    }
+});
+
+// --- 5. OUTPUTS (Flexible) ---
+
+Engine.register({
+    type: 'lamp_filament', label: 'Lamp', role: 'load', flexible: true,
+    terminals: [ {id:'L', x:0, y:0}, {id:'N', x:72, y:0} ],
+    getInternalPaths: () => [],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#f1f5f9", '12V', 'lamp', state);
+    }
+});
+
+Engine.register({
+    type: 'buzzer', label: 'Buzzer', role: 'load', flexible: true,
+    terminals: [ {id:'L', x:0, y:0}, {id:'N', x:72, y:0} ],
+    getInternalPaths: () => [],
+    render: (ctx, state, tools) => {
+        const t2 = state.lead2 || {x: 72, y:0};
+        drawAxial(ctx, 0, 0, t2.x, t2.y, "#1f2937", '', 'buzzer', state);
+    }
+});
+
+// --- 6. MULTI-LEG COMPONENTS (Fixed - Too hard to stretch 3 legs!) ---
+
+Engine.register({
+    type: 'transistor_npn', label: 'NPN Transistor', role: 'passive', size: { w: 50, h: 50 },
+    terminals: [ {id:'C', x:10, y:10, label:'C'}, {id:'B', x:25, y:45, label:'B'}, {id:'E', x:40, y:10, label:'E'} ],
+    getInternalPaths: () => [['C', 'E']],
+    render: (ctx, state, tools) => {
+        ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(25, 20, 18, 0, Math.PI); ctx.fill();
+        tools.plasticRect(ctx, 7, 18, 36, 10, "#1e293b", false);
+        tools.text(ctx, 'NPN', 25, 23, '#cbd5e1', 9);
+    }
+});
+
+Engine.register({
+    type: 'transistor_pnp', label: 'PNP Transistor', role: 'passive', size: { w: 50, h: 50 },
+    terminals: [ {id:'C', x:10, y:10, label:'C'}, {id:'B', x:25, y:45, label:'B'}, {id:'E', x:40, y:10, label:'E'} ],
+    getInternalPaths: () => [['E', 'C']],
+    render: (ctx, state, tools) => {
+        ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(25, 20, 18, 0, Math.PI); ctx.fill(); 
+        tools.plasticRect(ctx, 7, 18, 36, 10, "#1e293b", false);
+        tools.text(ctx, 'PNP', 25, 23, '#cbd5e1', 9);
     }
 });
 
@@ -152,56 +258,21 @@ Engine.register({
     }
 });
 
-// --- 4. SEMICONDUCTORS ---
-
 Engine.register({
-    type: 'diode', label: 'Rectifier Diode', role: 'passive', size: { w: 60, h: 20 },
-    terminals: [ {id:'A', x:0, y:10, label:'A'}, {id:'K', x:60, y:10, label:'K'} ],
-    getInternalPaths: () => [['A', 'K']],
+    type: 'potentiometer', label: 'Potentiometer', role: 'passive', size: { w: 50, h: 50 },
+    terminals: [ {id:'T1', x:10, y:40}, {id:'Wiper', x:25, y:40, label:'W'}, {id:'T2', x:40, y:40} ],
+    getInternalPaths: () => [['T1', 'Wiper'], ['Wiper', 'T2']],
     render: (ctx, state, tools) => {
-        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(60, 10); ctx.stroke();
-        tools.plasticRect(ctx, 15, 2, 30, 16, "#000"); // Black body
-        ctx.fillStyle = "#cbd5e1"; ctx.fillRect(38, 2, 5, 16); // Silver cathode band
+        tools.circle(ctx, 25, 20, 18, "#334155");
+        tools.circle(ctx, 25, 20, 12, "#f1f5f9");
+        ctx.fillStyle = "#000"; ctx.fillRect(23, 8, 4, 12);
     }
 });
 
-Engine.register({
-    type: 'zener_diode', label: 'Zener Diode', role: 'passive', size: { w: 60, h: 20 },
-    terminals: [ {id:'A', x:0, y:10, label:'A'}, {id:'K', x:60, y:10, label:'K'} ],
-    getInternalPaths: () => [['A', 'K']],
-    render: (ctx, state, tools) => {
-        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(60, 10); ctx.stroke();
-        tools.plasticRect(ctx, 20, 4, 20, 12, "#ef4444"); // Glass red body
-        ctx.fillStyle = "#000"; ctx.fillRect(34, 4, 4, 12); // Black cathode band
-    }
-});
+// --- 6. LOGIC GATES ---
 
 Engine.register({
-    type: 'transistor_npn', label: 'NPN Transistor', role: 'passive', size: { w: 50, h: 50 },
-    terminals: [ {id:'C', x:10, y:10, label:'C'}, {id:'B', x:25, y:45, label:'B'}, {id:'E', x:40, y:10, label:'E'} ],
-    getInternalPaths: () => [['C', 'E']], // Simplified continuity for logic testing
-    render: (ctx, state, tools) => {
-        ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(25, 20, 18, 0, Math.PI); ctx.fill(); // TO-92 flat side down
-        tools.plasticRect(ctx, 7, 18, 36, 10, "#1e293b", false);
-        tools.text(ctx, 'NPN', 25, 23, '#cbd5e1', 9);
-    }
-});
-
-Engine.register({
-    type: 'transistor_pnp', label: 'PNP Transistor', role: 'passive', size: { w: 50, h: 50 },
-    terminals: [ {id:'C', x:10, y:10, label:'C'}, {id:'B', x:25, y:45, label:'B'}, {id:'E', x:40, y:10, label:'E'} ],
-    getInternalPaths: () => [['E', 'C']],
-    render: (ctx, state, tools) => {
-        ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(25, 20, 18, 0, Math.PI); ctx.fill(); 
-        tools.plasticRect(ctx, 7, 18, 36, 10, "#1e293b", false);
-        tools.text(ctx, 'PNP', 25, 23, '#cbd5e1', 9);
-    }
-});
-
-// --- 5. LOGIC GATES (74 Series style) ---
-
-Engine.register({
-    type: 'logic_and', label: 'AND Gate (7408)', role: 'passive', size: { w: 60, h: 50 },
+    type: 'logic_and', label: 'AND Gate', role: 'passive', size: { w: 60, h: 50 },
     terminals: [ {id:'A', x:0, y:15, label:'A'}, {id:'B', x:0, y:35, label:'B'}, {id:'Y', x:60, y:25, label:'Y'} ],
     getInternalPaths: () => [], 
     render: (ctx, state, tools) => {
@@ -212,7 +283,7 @@ Engine.register({
 });
 
 Engine.register({
-    type: 'logic_or', label: 'OR Gate (7432)', role: 'passive', size: { w: 60, h: 50 },
+    type: 'logic_or', label: 'OR Gate', role: 'passive', size: { w: 60, h: 50 },
     terminals: [ {id:'A', x:0, y:15, label:'A'}, {id:'B', x:0, y:35, label:'B'}, {id:'Y', x:60, y:25, label:'Y'} ],
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
@@ -223,67 +294,54 @@ Engine.register({
 });
 
 Engine.register({
-    type: 'logic_not', label: 'NOT Gate (7404)', role: 'passive', size: { w: 60, h: 50 },
+    type: 'logic_not', label: 'NOT Gate', role: 'passive', size: { w: 60, h: 50 },
     terminals: [ {id:'A', x:0, y:25, label:'A'}, {id:'Y', x:60, y:25, label:'Y'} ],
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
         ctx.fillStyle = "#1e293b"; 
         ctx.beginPath(); ctx.moveTo(15, 10); ctx.lineTo(40, 25); ctx.lineTo(15, 40); ctx.fill();
-        tools.circle(ctx, 45, 25, 5, "#f1f5f9", "#1e293b"); // Inversion circle
+        tools.circle(ctx, 45, 25, 5, "#f1f5f9", "#1e293b"); 
     }
 });
 
-// --- 6. PROTOTYPING BOARDS ---
+// --- 7. STRIPBOARD ---
 
 const BOARD_COLS = 12;
 const BOARD_ROWS = 8;
-const SPACING = 36; // Wide spacing to make it easy to click and wire
+const SPACING = 36;
+const OFFSET = 36;
 
-// Automatically generate all the terminals (holes) for the board
 let trackboardTerminals = [];
 for(let r=0; r<BOARD_ROWS; r++) {
     for(let c=0; c<BOARD_COLS; c++) {
-        trackboardTerminals.push({
-            id: `R${r}_C${c}`,
-            x: 20 + c * SPACING,
-            y: 20 + r * SPACING
-        });
+        trackboardTerminals.push({ id: `R${r}_C${c}`, x: OFFSET + c * SPACING, y: OFFSET + r * SPACING });
     }
 }
 
 Engine.register({
-    type: 'trackboard',
-    label: 'Stripboard',
-    role: 'passive',
-    size: { w: 40 + (BOARD_COLS-1)*SPACING, h: 40 + (BOARD_ROWS-1)*SPACING }, 
+    type: 'trackboard', label: 'Stripboard', role: 'passive',
+    size: { w: OFFSET*2 + (BOARD_COLS-1)*SPACING, h: OFFSET*2 + (BOARD_ROWS-1)*SPACING }, 
     terminals: trackboardTerminals,
     getInternalPaths: (state) => {
         let paths = [];
         const broken = state.broken || {};
-        // Connect all horizontal holes together UNLESS the track is cut
         for(let r=0; r<BOARD_ROWS; r++) {
             for(let c=0; c<BOARD_COLS-1; c++) {
                 const cutId = `${r}_${c}`;
-                if(!broken[cutId]) {
-                    paths.push([`R${r}_C${c}`, `R${r}_C${c+1}`]);
-                }
+                if(!broken[cutId]) paths.push([`R${r}_C${c}`, `R${r}_C${c+1}`]);
             }
         }
         return paths;
     },
     onInteract: (comp, lx, ly) => {
         if(!comp.state.broken) comp.state.broken = {};
-        
-        // Find if the user clicked directly on the copper track BETWEEN two holes
         for(let r=0; r<BOARD_ROWS; r++) {
-            const ry = 20 + r * SPACING;
-            if(Math.abs(ly - ry) < 12) { // Clicked near this horizontal row
+            const ry = OFFSET + r * SPACING;
+            if(Math.abs(ly - ry) < 15) { 
                 for(let c=0; c<BOARD_COLS-1; c++) {
-                    const cx_mid = 20 + c * SPACING + (SPACING/2); // Midpoint between holes
-                    if(Math.abs(lx - cx_mid) < 12) { // Clicked exactly between holes
-                        const cutId = `${r}_${c}`;
-                        // Toggle the cut
-                        comp.state.broken[cutId] = !comp.state.broken[cutId]; 
+                    const cx_mid = OFFSET + c * SPACING + (SPACING/2); 
+                    if(Math.abs(lx - cx_mid) < 15) { 
+                        comp.state.broken[`${r}_${c}`] = !comp.state.broken[`${r}_${c}`]; 
                         return;
                     }
                 }
@@ -291,46 +349,23 @@ Engine.register({
         }
     },
     render: (ctx, state, tools) => {
-        const w = 40 + (BOARD_COLS-1)*SPACING;
-        const h = 40 + (BOARD_ROWS-1)*SPACING;
-        const broken = state.broken || {};
-
-        // Draw fiberglass board
+        const w = OFFSET*2 + (BOARD_COLS-1)*SPACING; const h = OFFSET*2 + (BOARD_ROWS-1)*SPACING;
         tools.plasticRect(ctx, 0, 0, w, h, "#fde68a"); 
-        
-        // Draw copper tracks (horizontal)
         for(let r=0; r<BOARD_ROWS; r++) {
-            const ry = 20 + r * SPACING;
-            
-            // Base copper strip
-            ctx.fillStyle = "#b45309"; 
-            ctx.fillRect(10, ry - 6, w - 20, 12);
-            
-            // Draw track cuts
+            const ry = OFFSET + r * SPACING;
+            ctx.fillStyle = "#b45309"; ctx.fillRect(10, ry - 6, w - 20, 12);
             for(let c=0; c<BOARD_COLS-1; c++) {
-                const cutId = `${r}_${c}`;
-                if(broken[cutId]) {
-                    const cx_mid = 20 + c * SPACING + (SPACING/2);
-                    // Erase copper
-                    ctx.fillStyle = "#fde68a";
-                    ctx.fillRect(cx_mid - 4, ry - 7, 8, 14);
-                    // Draw red 'X' to signify cut
-                    ctx.strokeStyle = "red"; ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(cx_mid - 4, ry - 4); ctx.lineTo(cx_mid + 4, ry + 4);
-                    ctx.moveTo(cx_mid - 4, ry + 4); ctx.lineTo(cx_mid + 4, ry - 4);
-                    ctx.stroke();
+                if(state.broken && state.broken[`${r}_${c}`]) {
+                    const cx = OFFSET + c * SPACING + (SPACING/2);
+                    ctx.fillStyle = "#fde68a"; ctx.fillRect(cx - 5, ry - 7, 10, 14);
+                    ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx-4, ry-4); ctx.lineTo(cx+4, ry+4); ctx.moveTo(cx-4, ry+4); ctx.lineTo(cx+4, ry-4); ctx.stroke();
                 }
             }
         }
-        
-        // Draw standard holes
         for(let r=0; r<BOARD_ROWS; r++) {
             for(let c=0; c<BOARD_COLS; c++) {
-                tools.circle(ctx, 20 + c * SPACING, 20 + r * SPACING, 4, "#1f2937");
+                tools.circle(ctx, OFFSET + c * SPACING, OFFSET + r * SPACING, 4, "#1f2937");
             }
         }
-        
-        tools.text(ctx, 'Vero / Stripboard (Click between holes to cut tracks)', w/2, 6, '#b45309', 9, "bold");
     }
 });

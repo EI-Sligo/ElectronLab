@@ -177,6 +177,22 @@ const App = {
             }
         }
     },
+    toggleBreakMode: () => {
+        const btn = document.getElementById('btn-break');
+        if (Interaction.mode === 'break') {
+            Interaction.mode = 'interact';
+            btn.innerHTML = "🔨 Break Tracks: OFF";
+            btn.classList.remove('active');
+        } else {
+            Interaction.mode = 'break';
+            btn.innerHTML = "🔨 Break Tracks: ON";
+            btn.classList.add('active');
+            
+            // Turn off other modes
+            document.getElementById('btn-move').classList.remove('active');
+            document.body.classList.remove('move-active');
+        }
+    },
 
     toggleFaultMode: () => {
         const btn = document.getElementById('btn-fault');
@@ -205,9 +221,11 @@ const App = {
         if(!comp) return;
         
         if(action === 'delete') {
-            if(confirm(`Delete ${comp.state.label}?`)) Engine.remove(comp.id);
+            if(confirm(`Delete ${comp.state.label || 'component'}?`)) Engine.remove(comp.id);
         } else if (action === 'prop') {
             App.openPropertyModal(comp);
+        } else if (action === 'rotate') {
+            comp.state.rotation = ((comp.state.rotation || 0) + 90) % 360;
         }
         document.getElementById('context-menu').style.display = 'none';
     },
@@ -254,8 +272,11 @@ const App = {
     openPropertyModal: (comp) => {
         currentEditComp = comp;
         const lbl = document.getElementById('prop-label');
+        const val = document.getElementById('prop-value');
         const flt = document.getElementById('prop-fault');
+        
         if(lbl) lbl.value = comp.state.label || '';
+        if(val) val.value = comp.state.value || '';
         if(flt) flt.value = comp.state.fault || 'none';
         
         const modal = document.getElementById('prop-modal');
@@ -265,9 +286,30 @@ const App = {
     saveProperty: () => {
         if(currentEditComp) {
             const lbl = document.getElementById('prop-label');
+            const val = document.getElementById('prop-value');
             const flt = document.getElementById('prop-fault');
             
             if(lbl) currentEditComp.state.label = lbl.value;
+            
+            // Auto-Format Value Logic
+            if(val) {
+                let v = val.value.trim();
+                // If user typed just a number (e.g. "2000"), format it
+                if(v && !isNaN(v)) {
+                    const num = parseFloat(v);
+                    if(currentEditComp.type === 'resistor') {
+                        if(num >= 1000000) v = (num/1000000) + 'MΩ';
+                        else if(num >= 1000) v = (num/1000) + 'kΩ';
+                        else v = num + 'Ω';
+                    }
+                    else if(currentEditComp.type === 'capacitor') {
+                        if(num < 1) v = (num * 1000) + 'nF'; // Assume uF input if < 1
+                        else v = num + 'μF';
+                    }
+                }
+                currentEditComp.state.value = v;
+            }
+
             if(flt) currentEditComp.state.fault = flt.value;
             
             document.getElementById('prop-modal').style.display = 'none';

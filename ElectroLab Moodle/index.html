@@ -110,7 +110,7 @@
         <div id="toolbar">
             <div class="toolbar-left">
                 <button id="btn-move" onclick="App.toggleMoveMode()">✋ Move Mode: OFF</button>
-                <button id="btn-fault" onclick="App.toggleFaultMode()">⚠️ Fault Mode: OFF</button>
+                <button id="btn-break" onclick="App.toggleBreakMode()">🔨 Break Tracks: OFF</button> <button id="btn-fault" onclick="App.toggleFaultMode()">⚠️ Fault Mode: OFF</button>
                 <button id="btn-wire-order" onclick="App.toggleWireOrder()">🔃 Wires: BACK</button>
             </div>
             <div id="hint-text">Right-click components for options. Hover wires for size.</div>
@@ -124,15 +124,16 @@
             <h3 style="margin-top:0;">Component Properties</h3>
             
             <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px;">Label:</label>
-            <input type="text" id="prop-label" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+            <input type="text" id="prop-label" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+            
+            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px;">Value (e.g. 10kΩ, 100μF):</label>
+            <input type="text" id="prop-value" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
             
             <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px;">Fault Condition:</label>
             <select id="prop-fault" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
                 <option value="none">None (Normal)</option>
                 <option value="open">Open Circuit (Break)</option>
                 <option value="short_ln">Short Circuit (L-N)</option>
-                <option value="earth_le">Earth Fault (L-E)</option>
-                <option value="open_N">Open Neutral</option>
             </select>
             
             <div style="text-align:right; display:flex; gap:10px; justify-content:flex-end;">
@@ -155,7 +156,8 @@
     </div>
 
     <div id="context-menu" class="context-menu" style="display:none;">
-        <div onclick="App.contextAction('prop')">🔧 Properties / Faults</div>
+        <div onclick="App.contextAction('rotate')">🔄 Rotate Component</div>
+        <div onclick="App.contextAction('prop')">🔧 Properties / Values</div>
         <div onclick="App.contextAction('delete')" style="color:#ef4444;">🗑️ Delete Component</div>
     </div>
 
