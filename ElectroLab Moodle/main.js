@@ -105,19 +105,16 @@ const App = {
     },
 
     restoreFromData: (data) => {
-        // No password needed here because it's called by loadState (which is already protected)
-        Engine.components = []; 
-        Engine.wires = [];
-        
+        Engine.components = []; Engine.wires = [];
         if(data.comps) {
             data.comps.forEach(c => {
                  const def = ComponentRegistry[c.type];
                  if(def) {
+                     // FIX: Safe size
+                     const size = def.size || { w: 40, h: 40 };
                      const newComp = {
-                         id: c.id,
-                         type: c.type,
-                         x: c.x, y: c.y,
-                         w: def.size.w, h: def.size.h,
+                         id: c.id, type: c.type, x: c.x, y: c.y, 
+                         w: size.w, h: size.h,
                          state: c.state || { on:false, energized:false, lit:false, fault:'none', label:def.label }
                      };
                      if(c.program) newComp.program = c.program; 
@@ -125,11 +122,32 @@ const App = {
                  }
             });
         }
-        
-        if(data.wires) {
-            Engine.wires = JSON.parse(JSON.stringify(data.wires));
-        }
+        if(data.wires) Engine.wires = JSON.parse(JSON.stringify(data.wires));
         alert("Circuit Loaded Successfully!");
+    },
+
+    loadLevel: (id) => {
+        const lvl = window.LEVELS[id];
+        if(!lvl) return;
+        Engine.components = []; Engine.wires = [];
+        
+        if (lvl.comps) {
+            lvl.comps.forEach(c => {
+                 const def = ComponentRegistry[c.type];
+                 if(def) {
+                     // FIX: Safe size
+                     const size = def.size || { w: 40, h: 40 };
+                     const newComp = {
+                         id: 'c_' + Date.now() + Math.random().toString(16).slice(2),
+                         type: c.type, x: c.x, y: c.y, 
+                         w: size.w, h: size.h,
+                         state: { on: false, energized: false, lit: false, fault: 'none', label: def.label }
+                     };
+                     Engine.components.push(newComp);
+                 }
+            });
+        }
+        if(lvl.wires) Engine.wires = JSON.parse(JSON.stringify(lvl.wires));
     },
 
     // --- COMPONENT MANAGEMENT ---

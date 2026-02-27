@@ -12,11 +12,19 @@ const Engine = {
     add: (type, x, y) => {
         if (!ComponentRegistry[type]) return;
         const def = ComponentRegistry[type];
+        
+        // FIX: Use default size if component doesn't define one
+        const size = def.size || { w: 40, h: 40 }; 
+
         const comp = {
             id: 'c_' + Date.now() + Math.random().toString(16).slice(2),
-            type: type, x: x, y: y, w: def.size.w, h: def.size.h,
-            // Initialize with empty inputs/outputs to prevent undefined errors
-            state: { on: false, switchVal: 0, energized: false, lit: false, fault: 'none', label: def.label, inputs: {}, outputs: {} }
+            type: type, x: x, y: y, 
+            w: size.w, h: size.h, // Use the safe size
+            state: { 
+                on: false, switchVal: 0, energized: false, lit: false, 
+                fault: 'none', label: def.label, 
+                inputs: {}, outputs: {}, value: '', lead2: null 
+            }
         };
         Engine.components.push(comp);
     },

@@ -1,7 +1,8 @@
-/* ELECTRONICS COMPONENTS - FULLY FLEXIBLE VERSION */
+/* ELECTRONICS COMPONENTS - FLEXIBLE & FIXED */
 
 // --- HELPER: Draw component body along a line ---
-const drawAxial = (ctx, x1, y1, x2, y2, color, label, type, state) => {
+// FIX: Added 'tools' to parameters so we can draw shapes
+const drawAxial = (ctx, state, tools, x1, y1, x2, y2, color, label, type) => {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const dist = Math.sqrt(dx*dx + dy*dy);
@@ -35,10 +36,9 @@ const drawAxial = (ctx, x1, y1, x2, y2, color, label, type, state) => {
         tools.plasticRect(ctx, mid - 10, -8, 20, 16, color);
     }
     else if (type === 'inductor') {
-        // Draw coils over the wire
         ctx.fillStyle = "#f1f5f9"; ctx.strokeStyle = "#b45309"; ctx.lineWidth = 2;
         for(let i=-15; i<=15; i+=6) {
-            ctx.beginPath(); ctx.arc(mid + i, -4, 6, 0, Math.PI); ctx.stroke(); // Coils
+            ctx.beginPath(); ctx.arc(mid + i, -4, 6, 0, Math.PI); ctx.stroke(); 
         }
     }
     else if (type === 'lamp') {
@@ -67,7 +67,7 @@ const drawAxial = (ctx, x1, y1, x2, y2, color, label, type, state) => {
         ctx.translate(-mid, 0);
     }
 
-    // 3. Label (keeps text upright)
+    // 3. Label
     if(label) {
         ctx.translate(mid, -15);
         if(angle > Math.PI/2 || angle < -Math.PI/2) { ctx.rotate(Math.PI); }
@@ -77,7 +77,7 @@ const drawAxial = (ctx, x1, y1, x2, y2, color, label, type, state) => {
     ctx.restore();
 };
 
-// --- 1. POWER SOURCES (Boxes remain fixed for stability) ---
+// --- 1. POWER & SOURCES ---
 
 Engine.register({
     type: 'battery_9v', label: '9V Battery', role: 'source', size: { w: 60, h: 100 },
@@ -111,7 +111,7 @@ Engine.register({
     }
 });
 
-// --- 2. SWITCHES (Now Flexible!) ---
+// --- 2. SWITCHES (Flexible) ---
 
 Engine.register({
     type: 'push_button', label: 'Push Button', role: 'switch', hasSwitch: true, flexible: true,
@@ -119,7 +119,7 @@ Engine.register({
     getInternalPaths: (state) => state.on ? [['T1', 'T2']] : [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#e2e8f0", 'Push', 'push', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#e2e8f0", 'Push', 'push');
     }
 });
 
@@ -129,7 +129,7 @@ Engine.register({
     getInternalPaths: (state) => state.on ? [['T1', 'T2']] : [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#cbd5e1", 'SW', 'switch', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#cbd5e1", 'SW', 'switch');
     }
 });
 
@@ -141,7 +141,7 @@ Engine.register({
     getInternalPaths: () => [['T1', 'T2']],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#d97706", state.value || '1kΩ', 'resistor', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#d97706", state.value || '1kΩ', 'resistor');
     }
 });
 
@@ -151,7 +151,7 @@ Engine.register({
     getInternalPaths: () => [['T1', 'T2']],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#b45309", '10mH', 'inductor', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#b45309", '10mH', 'inductor');
     }
 });
 
@@ -161,7 +161,7 @@ Engine.register({
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 36, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#3b82f6", state.value || '10μF', 'capacitor', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#3b82f6", state.value || '10μF', 'capacitor');
     }
 });
 
@@ -173,7 +173,7 @@ Engine.register({
     getInternalPaths: () => [['A', 'K']],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#000", '1N4007', 'diode', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#000", '1N4007', 'diode');
     }
 });
 
@@ -183,7 +183,7 @@ Engine.register({
     getInternalPaths: () => [['A', 'K']],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#ef4444", '5.1V', 'zener', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#ef4444", '5.1V', 'zener');
     }
 });
 
@@ -193,7 +193,21 @@ Engine.register({
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 36, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#ef4444", '', 'led', state);
+        // Special manual draw for LED rotation as it's not perfectly axial in drawing
+        const dx = t2.x; const dy = t2.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const angle = Math.atan2(dy, dx);
+        
+        ctx.save(); ctx.rotate(angle);
+        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(dist,0); ctx.stroke();
+        
+        const mid = dist/2;
+        ctx.translate(mid, 0);
+        ctx.shadowColor = state.lit ? "#ef4444" : "transparent"; ctx.shadowBlur = state.lit ? 20 : 0;
+        tools.circle(ctx, 0, 0, 10, state.lit ? "#ef4444" : "#7f1d1d"); 
+        ctx.shadowBlur = 0;
+        ctx.restore();
     }
 });
 
@@ -205,7 +219,7 @@ Engine.register({
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#f1f5f9", '12V', 'lamp', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#f1f5f9", '12V', 'lamp');
     }
 });
 
@@ -215,11 +229,11 @@ Engine.register({
     getInternalPaths: () => [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        drawAxial(ctx, 0, 0, t2.x, t2.y, "#1f2937", '', 'buzzer', state);
+        drawAxial(ctx, state, tools, 0, 0, t2.x, t2.y, "#1f2937", '', 'buzzer');
     }
 });
 
-// --- 6. MULTI-LEG COMPONENTS (Fixed - Too hard to stretch 3 legs!) ---
+// --- 6. MULTI-LEG COMPONENTS (Fixed) ---
 
 Engine.register({
     type: 'transistor_npn', label: 'NPN Transistor', role: 'passive', size: { w: 50, h: 50 },
@@ -251,10 +265,10 @@ Engine.register({
     ],
     getInternalPaths: () => [['P1','P2'], ['S1','CT'], ['CT','S2']],
     render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 25, 0, 30, 80, "#475569"); // Iron Core
+        tools.plasticRect(ctx, 25, 0, 30, 80, "#475569"); 
         ctx.strokeStyle = "#d97706"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(10, 20); ctx.lineTo(25, 20); ctx.moveTo(10, 60); ctx.lineTo(25, 60); ctx.stroke(); // Primary leads
-        ctx.beginPath(); ctx.moveTo(70, 10); ctx.lineTo(55, 10); ctx.moveTo(70, 40); ctx.lineTo(55, 40); ctx.moveTo(70, 70); ctx.lineTo(55, 70); ctx.stroke(); // Secondary leads
+        ctx.beginPath(); ctx.moveTo(10, 20); ctx.lineTo(25, 20); ctx.moveTo(10, 60); ctx.lineTo(25, 60); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(70, 10); ctx.lineTo(55, 10); ctx.moveTo(70, 40); ctx.lineTo(55, 40); ctx.moveTo(70, 70); ctx.lineTo(55, 70); ctx.stroke(); 
     }
 });
 
@@ -269,7 +283,7 @@ Engine.register({
     }
 });
 
-// --- 6. LOGIC GATES ---
+// --- 7. LOGIC GATES ---
 
 Engine.register({
     type: 'logic_and', label: 'AND Gate', role: 'passive', size: { w: 60, h: 50 },
@@ -304,7 +318,7 @@ Engine.register({
     }
 });
 
-// --- 7. STRIPBOARD ---
+// --- 8. STRIPBOARD ---
 
 const BOARD_COLS = 12;
 const BOARD_ROWS = 8;
@@ -367,5 +381,6 @@ Engine.register({
                 tools.circle(ctx, OFFSET + c * SPACING, OFFSET + r * SPACING, 4, "#1f2937");
             }
         }
+        tools.text(ctx, 'Stripboard', w/2, 10, '#b45309', 10, "bold");
     }
 });
