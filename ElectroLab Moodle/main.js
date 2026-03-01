@@ -149,6 +149,29 @@ const App = {
         }
         if(lvl.wires) Engine.wires = JSON.parse(JSON.stringify(lvl.wires));
     },
+    loadLevel: (id) => {
+        const lvl = window.LEVELS[id];
+        if(!lvl) return;
+        Engine.components = []; Engine.wires = [];
+        
+        if (lvl.comps) {
+            lvl.comps.forEach(c => {
+                 const def = ComponentRegistry[c.type];
+                 if(def) {
+                     // FIX: Safe size
+                     const size = def.size || { w: 40, h: 40 };
+                     const newComp = {
+                         id: 'c_' + Date.now() + Math.random().toString(16).slice(2),
+                         type: c.type, x: c.x, y: c.y, 
+                         w: size.w, h: size.h,
+                         state: { on: false, energized: false, lit: false, fault: 'none', label: def.label }
+                     };
+                     Engine.components.push(newComp);
+                 }
+            });
+        }
+        if(lvl.wires) Engine.wires = JSON.parse(JSON.stringify(lvl.wires));
+    },
 
     // --- COMPONENT MANAGEMENT ---
     addComponent: (type) => {

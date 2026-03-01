@@ -28,7 +28,6 @@ const Engine = {
         };
         Engine.components.push(comp);
     },
-
     remove: (id) => {
         Engine.components = Engine.components.filter(c => c.id !== id);
         Engine.wires = Engine.wires.filter(w => w.startComp !== id && w.endComp !== id);
