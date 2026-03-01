@@ -1,4 +1,4 @@
-/* core/renderer.js - Fixed Scope Drawing */
+/* core/renderer.js - X-Ray Mode & Scope Probes */
 const Renderer = {
     canvas: null, ctx: null, ghostWire: null, wiresOnTop: false, 
     hoveredTerm: null, hoveredWire: null, 
@@ -116,6 +116,7 @@ const Renderer = {
         };
 
         const drawComponents = () => {
+            // 1. Sort: Trackboard (at bottom), everything else on top
             const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
 
             sorted.forEach(comp => {
@@ -127,13 +128,20 @@ const Renderer = {
                     ctx.translate(comp.w/2, comp.h/2); ctx.rotate(angle); ctx.translate(-comp.w/2, -comp.h/2);
                 }
 
-                if(window.Interaction && window.Interaction.mode === 'break') {
-                    ctx.globalAlpha = (comp.type === 'trackboard') ? 1.0 : 0.2;
+                // --- X-RAY LOGIC ---
+                // If "Break Tracks" mode is on, make non-stripboard components transparent
+                if(typeof Interaction !== 'undefined' && Interaction.mode === 'break') {
+                    if(comp.type !== 'trackboard') {
+                        ctx.globalAlpha = 0.2; // 20% Opacity (Ghost)
+                    }
                 }
+                // -------------------
 
                 if(def.render) def.render(ctx, comp.state, Renderer.tools);
-                ctx.globalAlpha = 1.0;
-
+                
+                // Keep Alpha low for terminals too, or reset if you want them solid. 
+                // Keeping it low is better to see the track behind the terminal.
+                
                 if(def.terminals) {
                     def.terminals.forEach(t => {
                         let tx = t.x, ty = t.y;
@@ -172,7 +180,7 @@ const Renderer = {
             ctx.restore();
         }
 
-        // NEW: Draw Oscilloscope Probes
+        // DRAW OSCILLOSCOPE PROBES (High Visibility)
         if(window.Scope) window.Scope.drawProbes(ctx);
 
         Renderer.drawProbes(ctx); requestAnimationFrame(Renderer.loop);

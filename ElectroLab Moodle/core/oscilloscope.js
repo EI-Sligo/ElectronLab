@@ -20,10 +20,38 @@ window.Scope = {
             const p = window.Scope.probes[k];
             ctx.save();
             ctx.translate(p.x, p.y);
-            ctx.fillStyle = p.color;
-            ctx.beginPath(); ctx.moveTo(-5,-15); ctx.lineTo(5,-15); ctx.lineTo(0,0); ctx.fill();
-            ctx.fillStyle = "#fff"; ctx.textAlign="center"; ctx.font="10px Arial";
-            ctx.fillText(k.toUpperCase(), 0, -20);
+            
+            // 1. Drop Shadow for contrast against wires
+            ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 5;
+
+            // 2. The Probe Body (Larger Triangle)
+            ctx.beginPath(); 
+            ctx.moveTo(-10, -30); 
+            ctx.lineTo(10, -30); 
+            ctx.lineTo(0, -2); // Tip
+            ctx.closePath();
+            
+            ctx.fillStyle = p.color; 
+            ctx.fill();
+            
+            // 3. White Outline (To stand out on dark components)
+            ctx.lineWidth = 2; 
+            ctx.strokeStyle = "#fff"; 
+            ctx.stroke();
+
+            // 4. The Sensing Tip (Target Circle)
+            ctx.shadowBlur = 0; // Remove shadow for crisp tip
+            ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2);
+            ctx.fillStyle = "#fff"; ctx.fill();
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.stroke();
+
+            // 5. Label
+            ctx.fillStyle = "#fff"; 
+            ctx.font="bold 11px sans-serif"; 
+            ctx.textAlign="center";
+            ctx.shadowColor = "#000"; ctx.shadowBlur = 4; // Text shadow
+            ctx.fillText(k.toUpperCase(), 0, -35);
+            
             ctx.restore();
         });
     },
@@ -49,17 +77,12 @@ window.Scope = {
         const ctx = canvas.getContext('2d');
         const w = canvas.width; const h = canvas.height;
 
-        // --- AUTO-SCALE LOGIC ---
-        // 1. Find the highest voltage currently in memory
-        let maxV = 5; // Default minimum range (+/- 5V)
+        // Auto-Scale Logic
+        let maxV = 5; 
         [...window.Scope.data.ch1, ...window.Scope.data.ch2].forEach(v => {
             if(Math.abs(v) > maxV) maxV = Math.abs(v);
         });
-
-        // 2. Calculate Scale Factor to fit screen (with 10% margin)
-        // height / 2 = max amplitude in pixels
         const scale = (h / 2 * 0.9) / maxV;
-        // ------------------------
 
         ctx.fillStyle = "#000"; ctx.fillRect(0,0,w,h);
         
@@ -69,25 +92,22 @@ window.Scope = {
         for(let y=0; y<h; y+=20) { ctx.moveTo(0,y); ctx.lineTo(w,y); }
         ctx.stroke();
 
-        // Draw Channel 1 (Yellow)
+        // Ch1
         ctx.strokeStyle = "#facc15"; ctx.lineWidth=2; ctx.beginPath();
         window.Scope.data.ch1.forEach((v, i) => {
-            const x = i * (w/200); 
-            const y = (h/2) - (v * scale); // Use dynamic scale
+            const x = i * (w/200); const y = (h/2) - (v * scale);
             if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
         });
         ctx.stroke();
 
-        // Draw Channel 2 (Blue)
+        // Ch2
         ctx.strokeStyle = "#3b82f6"; ctx.beginPath();
         window.Scope.data.ch2.forEach((v, i) => {
-            const x = i * (w/200); 
-            const y = (h/2) - (v * scale); // Use dynamic scale
+            const x = i * (w/200); const y = (h/2) - (v * scale);
             if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
         });
         ctx.stroke();
 
-        // Show Current Range Text
         ctx.fillStyle = "#fff"; ctx.font = "10px monospace"; ctx.textAlign = "left";
         ctx.fillText(`Scale: +/- ${Math.ceil(maxV)}V`, 10, 15);
     }
