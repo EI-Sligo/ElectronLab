@@ -1,9 +1,9 @@
-/* core/interaction.js - Flexible Lead Dragging */
+/* core/interaction.js - Enhanced Snap & Scope */
 const Interaction = {
     selectedComp: null, contextComp: null, draggingProbe: null,
     isDragging: false, isPanning: false, lastPanPos: { x: 0, y: 0 },
     dragOffset: { x: 0, y: 0 }, wireStart: null, mode: 'interact', 
-    cableSize: 'red', draggingLead: null, // NEW: Track which lead is being dragged
+    cableSize: 'red', draggingLead: null,
 
     init: (canvas) => {
         canvas.addEventListener('mousedown', Interaction.handleDown);
@@ -42,35 +42,40 @@ const Interaction = {
             Interaction.wireStart = null; Renderer.ghostWire = null; return; 
         }
 
+        // CHECK SCOPE PROBES
+        if(window.Scope) {
+            const hitScope = ['ch1', 'ch2', 'gnd'].find(ch => {
+                const p = window.Scope.probes[ch];
+                return (Math.hypot(x - p.x, y - p.y) < 15);
+            });
+            if(hitScope) { Interaction.draggingProbe = {type:'scope', id:hitScope}; return; }
+        }
+
+        // CHECK METER PROBES
         const hitProbe = ['red', 'black'].find(c => {
             const p = Meter.probes[c]; return (x > p.x - 10 && x < p.x + 10 && y > p.y - 100 && y < p.y);
         });
-        if(hitProbe) { Interaction.draggingProbe = hitProbe; return; }
+        if(hitProbe) { Interaction.draggingProbe = {type:'meter', id:hitProbe}; return; }
 
-        // --- SELECTION LOGIC ---
+        // COMPONENT SELECTION
         const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
         let targetList = (Interaction.mode === 'break') ? sorted : sorted.reverse(); 
         
-        // 1. Did we click a TERMINAL on a FLEXIBLE component?
         let clickedTerm = null;
         if(Interaction.mode === 'interact') {
             for(let c of targetList) {
                 const def = ComponentRegistry[c.type];
                 if(def.flexible) {
-                    // Check T2
                     const t2Pos = Renderer.getTerminalPos(c.id, def.terminals[1].id);
-                    if(Math.hypot(x - t2Pos.x, y - t2Pos.y) < 10) { clickedTerm = { c, id: 2 }; break; }
-                    // Check T1 (Moving T1 moves the base x,y but keeps T2 fixed absolute? No, let's make T1 move whole body)
+                    if(Math.hypot(x - t2Pos.x, y - t2Pos.y) < 15) { clickedTerm = { c, id: 2 }; break; }
                 }
             }
         }
 
         const clicked = targetList.find(c => {
             if(ComponentRegistry[c.type].flexible) {
-                // Hit test line for flex components
                 const p1 = Renderer.getTerminalPos(c.id, ComponentRegistry[c.type].terminals[0].id);
                 const p2 = Renderer.getTerminalPos(c.id, ComponentRegistry[c.type].terminals[1].id);
-                // Simple distance to segment check
                 const A = x - p1.x; const B = y - p1.y;
                 const C = p2.x - p1.x; const D = p2.y - p1.y;
                 const dot = A * C + B * D;
@@ -82,11 +87,8 @@ const Interaction = {
                 else if (param > 1) { xx = p2.x; yy = p2.y; }
                 else { xx = p1.x + param * C; yy = p1.y + param * D; }
                 const dx = x - xx; const dy = y - yy;
-                return (dx * dx + dy * dy) < 100; // 10px radius hit
+                return (dx * dx + dy * dy) < 100;
             } else {
-                // Box hit test for others
-                // Rotate click point to check inside box? Simplified for now: box at center.
-                // Actually, existing box logic:
                 return x > c.x && x < c.x + c.w && y > c.y && y < c.y + c.h; 
             }
         });
@@ -105,11 +107,8 @@ const Interaction = {
         if(clickedTerm) {
             Interaction.draggingLead = clickedTerm;
             Interaction.selectedComp = clickedTerm.c;
-            
-            // Disconnect virtual wires on drag start
             const attached = Engine.wires.filter(w => w.size === 'virtual' && (w.startComp === clickedTerm.c.id || w.endComp === clickedTerm.c.id));
             attached.forEach(w => Engine.removeWire(w));
-            
             return;
         }
 
@@ -124,10 +123,8 @@ const Interaction = {
         if(clicked && Interaction.mode === 'move') {
             Interaction.selectedComp = clicked; Interaction.isDragging = true;
             Interaction.dragOffset = { x: x - clicked.x, y: y - clicked.y };
-            
             const attached = Engine.wires.filter(w => w.size === 'virtual' && (w.startComp === clicked.id || w.endComp === clicked.id));
             attached.forEach(w => Engine.removeWire(w));
-            
             return;
         } 
         
@@ -148,19 +145,12 @@ const Interaction = {
         const x = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).x;
         const y = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).y;
 
-        // LEAD DRAGGING
         if(Interaction.draggingLead) {
             const c = Interaction.draggingLead.c;
-            const def = ComponentRegistry[c.type];
-            
-            // Snap mouse to grid
             const sx = Math.round(x/18)*18;
             const sy = Math.round(y/18)*18;
-            
-            // Calculate new relative position for Lead 2
             const dx = sx - c.x;
             const dy = sy - c.y;
-            
             c.state.lead2 = { x: dx, y: dy };
             return;
         }
@@ -181,10 +171,12 @@ const Interaction = {
             });
         }
 
-        Renderer.hoveredWire = (!Renderer.hoveredTerm && !Interaction.draggingProbe) ? Engine.wires.find(w => Interaction.isNearWire(x, y, w)) : null;
-
         if(Interaction.draggingProbe) {
-            const p = Meter.probes[Interaction.draggingProbe];
+            const dp = Interaction.draggingProbe;
+            let p;
+            if(dp.type === 'meter') p = Meter.probes[dp.id];
+            if(dp.type === 'scope') p = window.Scope.probes[dp.id];
+            
             p.x = x; p.y = y; p.compId = null; p.termId = null;
             Engine.components.forEach(c => {
                 const def = ComponentRegistry[c.type];
@@ -211,7 +203,7 @@ const Interaction = {
     handleUp: () => { 
         const comp = Interaction.selectedComp;
         
-        // AUTO-JOIN (For both Dragging Body AND Dragging Leads)
+        // AUTO-JOIN TO STRIPBOARD (Increased Snap Distance to 20px)
         if((Interaction.isDragging || Interaction.draggingLead) && comp) {
             const boards = Engine.components.filter(c => c.type === 'trackboard');
             boards.forEach(board => {
@@ -222,7 +214,8 @@ const Interaction = {
                     const cPos = Renderer.getTerminalPos(comp.id, ct.id);
                     boardDef.terminals.forEach(bt => {
                         const bPos = Renderer.getTerminalPos(board.id, bt.id);
-                        if(Math.hypot(bPos.x - cPos.x, bPos.y - cPos.y) < 10) {
+                        // FIX: Increased from 10 to 20 to ensure it snaps even if slightly off visually
+                        if(Math.hypot(bPos.x - cPos.x, bPos.y - cPos.y) < 20) {
                             Engine.addWire(comp.id, ct.id, board.id, bt.id, 'virtual');
                         }
                     });
