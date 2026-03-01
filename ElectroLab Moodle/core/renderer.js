@@ -1,4 +1,4 @@
-/* core/renderer.js - Flexible Components Support */
+/* core/renderer.js - Fixed Scope Drawing */
 const Renderer = {
     canvas: null, ctx: null, ghostWire: null, wiresOnTop: false, 
     hoveredTerm: null, hoveredWire: null, 
@@ -23,22 +23,17 @@ const Renderer = {
         const comp = Engine.components.find(c => c.id === compId); if (!comp) return null;
         const def = ComponentRegistry[comp.type]; const t = def.terminals.find(t => t.id === termId); if(!t) return null;
         
-        // FLEXIBLE LOGIC:
         if(def.flexible) {
-            // T1 is always at component 0,0. T2 is at state.lead2 (or default)
             if(termId === def.terminals[0].id) return { x: comp.x, y: comp.y };
             if(termId === def.terminals[1].id) {
                 const l2 = comp.state.lead2 || { x: def.terminals[1].x, y: def.terminals[1].y };
                 return { x: comp.x + l2.x, y: comp.y + l2.y };
             }
         }
-
-        // STANDARD ROTATION LOGIC:
         const cx = comp.w / 2; const cy = comp.h / 2;
         const angle = (comp.state.rotation || 0) * (Math.PI / 180);
         const rx = Math.cos(angle) * (t.x - cx) - Math.sin(angle) * (t.y - cy) + cx;
         const ry = Math.sin(angle) * (t.x - cx) + Math.cos(angle) * (t.y - cy) + cy;
-        
         return { x: comp.x + rx, y: comp.y + ry };
     },
 
@@ -102,7 +97,7 @@ const Renderer = {
 
         const drawWires = () => {
             Engine.wires.forEach(w => {
-                if(w.size === 'virtual') return; // Hide virtual wires
+                if(w.size === 'virtual') return; 
                 const p1 = Renderer.getTerminalPos(w.startComp, w.startTerm); const p2 = Renderer.getTerminalPos(w.endComp, w.endTerm);
                 if(p1 && p2) {
                     const isLive = Engine.isLive(w.startComp, w.startTerm) || Engine.isLive(w.endComp, w.endTerm);
@@ -127,9 +122,7 @@ const Renderer = {
                 const def = ComponentRegistry[comp.type];
                 ctx.save(); ctx.translate(comp.x, comp.y);
                 
-                if(def.flexible) {
-                    // Flexible components handle their own drawing relative to 0,0
-                } else {
+                if(!def.flexible) {
                     const angle = (comp.state.rotation || 0) * (Math.PI / 180);
                     ctx.translate(comp.w/2, comp.h/2); ctx.rotate(angle); ctx.translate(-comp.w/2, -comp.h/2);
                 }
@@ -143,15 +136,12 @@ const Renderer = {
 
                 if(def.terminals) {
                     def.terminals.forEach(t => {
-                        // For flexible components, we calculate the terminal position for drawing manually here
-                        // to ensure screws appear at the leg ends
                         let tx = t.x, ty = t.y;
                         if(def.flexible && t.id === def.terminals[1].id) {
                             const l2 = comp.state.lead2 || {x: t.x, y: t.y};
                             tx = l2.x; ty = l2.y;
                         }
                         
-                        // We actually don't want to spin flexible terminals, they are absolute relative to x,y
                         if(def.flexible) Renderer.tools.screw(ctx, tx, ty);
                         else Renderer.tools.screw(ctx, t.x, t.y);
                         
@@ -181,6 +171,9 @@ const Renderer = {
             ctx.fillText(h.term.label || h.term.id, 0, -21);
             ctx.restore();
         }
+
+        // NEW: Draw Oscilloscope Probes
+        if(window.Scope) window.Scope.drawProbes(ctx);
 
         Renderer.drawProbes(ctx); requestAnimationFrame(Renderer.loop);
     }
