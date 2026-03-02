@@ -121,10 +121,11 @@ Engine.register({
     }
 });
 
+// AC Generator
 Engine.register({
     type: 'ac_source', label: 'AC Generator', role: 'source', size: { w: 80, h: 80 },
     terminals: [ {id:'L', x:20, y:15, label:'L'}, {id:'N', x:60, y:15, label:'N'} ],
-    getInternalPaths: () => [],
+    getInternalPaths: () => [], // No internal path to keep L/N separate
     render: (ctx, state, tools) => {
         tools.plasticRect(ctx, 0, 0, 80, 80, "#f8fafc");
         tools.circle(ctx, 40, 45, 20, "#fff", "#334155");
@@ -151,7 +152,6 @@ Engine.register({
     getInternalPaths: (state) => state.on ? [['T1', 'T2']] : [],
     render: (ctx, state, tools) => {
         const t2 = state.lead2 || {x: 72, y:0};
-        // Use custom draw for toggle visual
         const dx = t2.x; const dy = t2.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         const angle = Math.atan2(dy, dx);
@@ -208,18 +208,36 @@ Engine.register({
     }
 });
 
+// TRANSFORMER - No Internal Paths (To prevent Short Circuit of logic)
 Engine.register({
-    type: 'transformer_ct', label: 'Centre-Tapped Transformer', role: 'passive', size: { w: 80, h: 80 },
+    type: 'transformer_ct', label: 'Transformer (AC)', role: 'source', size: { w: 80, h: 80 },
+    // Only Output Terminals (Secondary Side) - Pins aligned to 36px grid
     terminals: [ 
-        {id:'P1', x:10, y:20, label:'P1'}, {id:'P2', x:10, y:60, label:'P2'}, 
-        {id:'S1', x:70, y:10, label:'S1'}, {id:'CT', x:70, y:40, label:'CT'}, {id:'S2', x:70, y:70, label:'S2'} 
+        {id:'S1', x:80, y:0, label:'S1'},  // Output Top
+        {id:'CT', x:80, y:36, label:'CT'}, // Center Tap (0V)
+        {id:'S2', x:80, y:72, label:'S2'}  // Output Bottom
     ],
-    getInternalPaths: () => [['P1','P2'], ['S1','CT'], ['CT','S2']],
+    getInternalPaths: () => [], // CRITICAL FIX: No internal paths logic
     render: (ctx, state, tools) => {
-        tools.plasticRect(ctx, 25, 0, 30, 80, "#475569"); 
+        tools.plasticRect(ctx, 10, 5, 60, 70, "#475569"); 
+        
+        // Label with Voltage
+        const volts = state.value || '12';
+        tools.text(ctx, `${volts}V AC`, 40, 40, '#fff', 10, "bold");
+
         ctx.strokeStyle = "#d97706"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(10, 20); ctx.lineTo(25, 20); ctx.moveTo(10, 60); ctx.lineTo(25, 60); ctx.stroke(); 
-        ctx.beginPath(); ctx.moveTo(70, 10); ctx.lineTo(55, 10); ctx.moveTo(70, 40); ctx.lineTo(55, 40); ctx.moveTo(70, 70); ctx.lineTo(55, 70); ctx.stroke(); 
+        
+        // Primary Coil (Visual Only - Faded)
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.moveTo(15, 18); ctx.lineTo(25, 18); ctx.moveTo(15, 54); ctx.lineTo(25, 54); ctx.stroke(); 
+        ctx.globalAlpha = 1.0;
+
+        // Secondary Coil (Active)
+        ctx.beginPath(); ctx.moveTo(80, 0); ctx.lineTo(60, 0); ctx.moveTo(80, 36); ctx.lineTo(60, 36); ctx.moveTo(80, 72); ctx.lineTo(60, 72); ctx.stroke(); 
+        
+        // Iron Core symbol
+        ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(35, 10); ctx.lineTo(35, 70); ctx.moveTo(45, 10); ctx.lineTo(45, 70); ctx.stroke();
     }
 });
 

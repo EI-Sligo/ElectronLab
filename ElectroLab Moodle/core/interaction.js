@@ -1,4 +1,3 @@
-/* core/interaction.js - Fixed Probes, Wiring & Straight Lines */
 const Interaction = {
     selectedComp: null, contextComp: null, draggingProbe: null,
     isDragging: false, isPanning: false, lastPanPos: { x: 0, y: 0 },
@@ -11,10 +10,7 @@ const Interaction = {
         window.addEventListener('mouseup', Interaction.handleUp);
         canvas.addEventListener('wheel', Interaction.handleWheel, { passive: false });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('click', () => {
-            const menu = document.getElementById('context-menu');
-            if(menu) menu.style.display = 'none';
-        });
+        document.addEventListener('click', () => { document.getElementById('context-menu').style.display = 'none'; });
     },
 
     handleWheel: (e) => {
@@ -22,9 +18,8 @@ const Interaction = {
         const rect = document.getElementById('simCanvas').getBoundingClientRect();
         const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
         const worldPosBefore = Renderer.screenToWorld(mouseX, mouseY);
-        const zoomSensitivity = 0.001;
-        const delta = -e.deltaY * zoomSensitivity;
-        Renderer.camera.zoom = Math.min(Math.max(Renderer.camera.minZoom, Renderer.camera.zoom + delta), Renderer.camera.maxZoom);
+        const delta = -e.deltaY * 0.001;
+        Renderer.camera.zoom = Math.min(Math.max(0.1, Renderer.camera.zoom + delta), 5);
         Renderer.camera.x += (mouseX - (worldPosBefore.x * Renderer.camera.zoom + Renderer.camera.x));
         Renderer.camera.y += (mouseY - (worldPosBefore.y * Renderer.camera.zoom + Renderer.camera.y));
     },
@@ -38,33 +33,28 @@ const Interaction = {
             Interaction.isPanning = true; Interaction.lastPanPos = { x: e.clientX, y: e.clientY }; return;
         }
 
-        if(Interaction.wireStart && e.button === 2) {
-            Interaction.wireStart = null; Renderer.ghostWire = null; return; 
-        }
+        if(Interaction.wireStart && e.button === 2) { Interaction.wireStart = null; Renderer.ghostWire = null; return; }
 
-        // 1. CHECK SCOPE PROBES (Tip OR Body)
+        // --- FIXED: Hitboxes for Probes ---
         if(window.Scope) {
             const hitScope = ['ch1', 'ch2', 'gnd'].find(ch => {
                 const p = window.Scope.probes[ch];
-                // Hitbox: +/- 20px X, and from Tip (y) up to Handle (y-50)
-                return (Math.abs(x - p.x) < 20 && y > p.y - 60 && y < p.y + 10);
+                // Tip (+/- 15px) OR Handle (Rect above tip)
+                return (Math.hypot(x - p.x, y - p.y) < 15) || (Math.abs(x - p.x) < 15 && y < p.y && y > p.y - 60);
             });
             if(hitScope) { Interaction.draggingProbe = {type:'scope', id:hitScope}; return; }
         }
 
-        // 2. CHECK METER PROBES (Tip OR Body)
         const hitProbe = ['red', 'black'].find(c => {
             const p = Meter.probes[c];
-            // Hitbox: +/- 20px X, and from Tip (y) up to Handle (y-100)
-            return (Math.abs(x - p.x) < 20 && y > p.y - 120 && y < p.y + 10);
+            return (Math.hypot(x - p.x, y - p.y) < 15) || (Math.abs(x - p.x) < 15 && y < p.y && y > p.y - 120);
         });
         if(hitProbe) { Interaction.draggingProbe = {type:'meter', id:hitProbe}; return; }
 
-        // 3. CHECK COMPONENTS
+        // Check Components
         const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
         let targetList = (Interaction.mode === 'break') ? sorted : sorted.reverse(); 
         
-        // Flexible Legs
         let clickedTerm = null;
         if(Interaction.mode === 'interact') {
             for(let c of targetList) {
@@ -80,13 +70,23 @@ const Interaction = {
             if(ComponentRegistry[c.type].flexible) {
                 const p1 = Renderer.getTerminalPos(c.id, ComponentRegistry[c.type].terminals[0].id);
                 const p2 = Renderer.getTerminalPos(c.id, ComponentRegistry[c.type].terminals[1].id);
-                return Interaction.distToSegment(x, y, p1.x, p1.y, p2.x, p2.y) < 10;
+                // Straight line hitbox
+                const A = x - p1.x; const B = y - p1.y;
+                const C = p2.x - p1.x; const D = p2.y - p1.y;
+                const dot = A * C + B * D;
+                const len_sq = C * C + D * D;
+                let param = -1;
+                if (len_sq !== 0) param = dot / len_sq;
+                let xx, yy;
+                if (param < 0) { xx = p1.x; yy = p1.y; }
+                else if (param > 1) { xx = p2.x; yy = p2.y; }
+                else { xx = p1.x + param * C; yy = p1.y + param * D; }
+                return Math.hypot(x - xx, y - yy) < 10;
             } else {
                 return x > c.x && x < c.x + c.w && y > c.y && y < c.y + c.h; 
             }
         });
 
-        // Right Click (Delete)
         if(e.button === 2) {
              const hitWire = Engine.wires.find(w => Interaction.isNearWire(x, y, w));
              if(hitWire) { Engine.removeWire(hitWire); return; }
@@ -108,7 +108,6 @@ const Interaction = {
 
         if(clicked && Interaction.mode === 'fault') { App.openPropertyModal(clicked); return; }
 
-        // WIRING START (If hovering a terminal)
         if(Interaction.mode === 'interact' && Renderer.hoveredTerm) {
             const ht = Renderer.hoveredTerm;
             Interaction.startWiring(ht.comp, ht.term.id, ht.x, ht.y);
@@ -140,7 +139,7 @@ const Interaction = {
         const x = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).x;
         const y = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).y;
 
-        // --- HOVER LOGIC (Restored) ---
+        // --- HOVER LOGIC ---
         Renderer.hoveredTerm = null;
         if(Interaction.mode === 'interact' && !Interaction.draggingProbe && !Interaction.isDragging && !Interaction.draggingLead) {
             const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
@@ -159,7 +158,7 @@ const Interaction = {
         
         Renderer.hoveredWire = (!Renderer.hoveredTerm && !Interaction.draggingProbe) ? Engine.wires.find(w => Interaction.isNearWire(x, y, w)) : null;
 
-        // --- SNAP LOGIC ---
+        // --- MAGNETIC SNAP ---
         let snapX = x, snapY = y; let isSnapped = false;
         if(Interaction.isDragging || Interaction.draggingLead) {
             const boards = Engine.components.filter(c => c.type === 'trackboard');
@@ -204,13 +203,9 @@ const Interaction = {
         }
 
         if(Interaction.isDragging && Interaction.selectedComp) {
-            if(isSnapped) {
-                Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
-                Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
-            } else {
-                Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
-                Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
-            }
+            // Components don't snap, just follow grid/mouse
+            Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
+            Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
         }
 
         if(Interaction.wireStart) Renderer.ghostWire = { x1: Interaction.wireStart.x, y1: Interaction.wireStart.y, x2: x, y2: y };
@@ -218,6 +213,7 @@ const Interaction = {
 
     handleUp: () => { 
         const comp = Interaction.selectedComp;
+        // Auto-Snap for components
         if((Interaction.isDragging || Interaction.draggingLead) && comp) {
             const boards = Engine.components.filter(c => c.type === 'trackboard');
             boards.forEach(board => {
@@ -238,28 +234,22 @@ const Interaction = {
         document.body.style.cursor = "default"; 
     },
 
-    // Straight Line Distance Helper
-    distToSegment: (x, y, x1, y1, x2, y2) => {
-        const A = x - x1; const B = y - y1;
-        const C = x2 - x1; const D = y2 - y1;
+    isNearWire: (px, py, w) => { 
+        const p1 = Renderer.getTerminalPos(w.startComp, w.startTerm);
+        const p2 = Renderer.getTerminalPos(w.endComp, w.endTerm);
+        if(!p1 || !p2) return false;
+        // Straight line dist
+        const A = px - p1.x; const B = py - p1.y;
+        const C = p2.x - p1.x; const D = p2.y - p1.y;
         const dot = A * C + B * D;
         const len_sq = C * C + D * D;
         let param = -1;
         if (len_sq !== 0) param = dot / len_sq;
         let xx, yy;
-        if (param < 0) { xx = x1; yy = y1; }
-        else if (param > 1) { xx = x2; yy = y2; }
-        else { xx = x1 + param * C; yy = y1 + param * D; }
-        const dx = x - xx; const dy = y - yy;
-        return Math.sqrt(dx * dx + dy * dy);
-    },
-
-    isNearWire: (px, py, w) => { 
-        const p1 = Renderer.getTerminalPos(w.startComp, w.startTerm);
-        const p2 = Renderer.getTerminalPos(w.endComp, w.endTerm);
-        if(!p1 || !p2) return false;
-        // Use Straight Line Distance
-        return Interaction.distToSegment(px, py, p1.x, p1.y, p2.x, p2.y) < 8;
+        if (param < 0) { xx = p1.x; yy = p1.y; }
+        else if (param > 1) { xx = p2.x; yy = p2.y; }
+        else { xx = p1.x + param * C; yy = p1.y + param * D; }
+        return Math.hypot(px - xx, py - yy) < 8;
     },
 
     startWiring: (comp, termId, tx, ty) => {

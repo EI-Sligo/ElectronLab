@@ -1,4 +1,4 @@
-/* core/meter.js - Stable Readings */
+/* core/meter.js - Stabilized Display */
 const Meter = {
     mode: 'off', 
     voltageSetting: 500,
@@ -54,7 +54,7 @@ const Meter = {
             return;
         }
 
-        // VOLTAGE MODE
+        // VOLTAGE MODE (Stable)
         if(Meter.mode === 'volts') {
             if(!Engine.powerOn) { el.innerText = "0.00 V"; return; }
             
@@ -64,8 +64,7 @@ const Meter = {
             const diff = Math.abs(v1 - v2);
             el.innerText = diff.toFixed(2) + " V";
         } 
-        
-        // RESISTANCE MODE
+        // RESISTANCE
         else if(Meter.mode === 'ohms') {
             if(Engine.powerOn) { el.innerText = "ERR:LIVE"; return; }
             const connected = Engine.checkConnection(p1.compId, p1.termId, p2.compId, p2.termId);
@@ -83,8 +82,7 @@ const Meter = {
                 el.innerText = "OL";
             }
         }
-
-        // CAPACITANCE MODE
+        // CAPACITANCE
         else if(Meter.mode === 'cap') {
             if(Engine.powerOn) { el.innerText = "ERR:DISCH"; return; } 
             if(p1.compId === p2.compId) {
@@ -96,8 +94,7 @@ const Meter = {
             }
             el.innerText = "0.0 nF";
         }
-
-        // CURRENT MODE
+        // CURRENT
         else if(Meter.mode === 'amps') {
             if(!Engine.powerOn) { el.innerText = "0.00 A"; return; }
             if(p1.compId === p2.compId) {
@@ -112,11 +109,7 @@ const Meter = {
                     if(amps < 0.001) el.innerText = (amps*1000000).toFixed(1) + " μA";
                     else if(amps < 1) el.innerText = (amps*1000).toFixed(1) + " mA";
                     else el.innerText = amps.toFixed(2) + " A";
-                }
-                else if(comp.type === 'led_red' && volts > 1.5) {
-                    el.innerText = "20.0 mA";
-                }
-                else {
+                } else {
                     el.innerText = "0.00 A";
                 }
             } else {

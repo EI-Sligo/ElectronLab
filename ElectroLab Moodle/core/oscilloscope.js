@@ -1,4 +1,4 @@
-/* core/oscilloscope.js - Fixed Waveforms */
+/* core/oscilloscope.js - High Vis + Real Physics */
 window.Scope = {
     on: false,
     probes: {
@@ -18,21 +18,19 @@ window.Scope = {
         if(!window.Scope.on) return;
         ['ch1', 'ch2', 'gnd'].forEach(k => {
             const p = window.Scope.probes[k];
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            // High-Vis Probe
-            ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 4;
-            ctx.fillStyle = p.color; ctx.beginPath(); ctx.moveTo(-8,-25); ctx.lineTo(8,-25); ctx.lineTo(0,0); ctx.fill();
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
-            ctx.fillStyle="#fff"; ctx.font="10px Arial"; ctx.textAlign="center"; ctx.fillText(k.toUpperCase(), 0, -30);
+            ctx.save(); ctx.translate(p.x, p.y);
+            // Big Visibility Triangle
+            ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 5;
+            ctx.fillStyle = p.color; ctx.beginPath(); ctx.moveTo(-10,-35); ctx.lineTo(10,-35); ctx.lineTo(0,0); ctx.fill();
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = "#fff"; ctx.font="bold 12px Arial"; ctx.textAlign="center"; ctx.fillText(k.toUpperCase(), 0, -40);
             ctx.restore();
         });
     },
 
     update: () => {
         if(!window.Scope.on || !Engine.powerOn) return;
-        
-        // IMPORTANT: Ask for 'instant' voltage to get the sine wave
+        // Request INSTANT voltage for waveform
         const vGnd = window.Scope.probes.gnd.compId ? Engine.getPotential(window.Scope.probes.gnd.compId, window.Scope.probes.gnd.termId, 'instant') : 0;
         const v1 = window.Scope.probes.ch1.compId ? Engine.getPotential(window.Scope.probes.ch1.compId, window.Scope.probes.ch1.termId, 'instant') - vGnd : 0;
         const v2 = window.Scope.probes.ch2.compId ? Engine.getPotential(window.Scope.probes.ch2.compId, window.Scope.probes.ch2.termId, 'instant') - vGnd : 0;
@@ -51,7 +49,7 @@ window.Scope = {
         const ctx = canvas.getContext('2d');
         const w = canvas.width; const h = canvas.height;
 
-        let maxV = 5; 
+        let maxV = 10; 
         [...window.Scope.data.ch1, ...window.Scope.data.ch2].forEach(v => { if(Math.abs(v) > maxV) maxV = Math.abs(v); });
         const scale = (h / 2 * 0.9) / maxV;
 
@@ -75,7 +73,6 @@ window.Scope = {
         });
         ctx.stroke();
 
-        ctx.fillStyle = "#fff"; ctx.font = "10px monospace"; ctx.textAlign = "left";
-        ctx.fillText(`Scale: +/- ${Math.ceil(maxV)}V`, 10, 15);
+        ctx.fillStyle = "#fff"; ctx.fillText(`Scale: +/- ${Math.ceil(maxV)}V`, 10, 15);
     }
 };
