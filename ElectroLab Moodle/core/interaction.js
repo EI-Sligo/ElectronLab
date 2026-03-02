@@ -1,4 +1,4 @@
-/* core/interaction.js - Fixed Probe Grabbing & Wiring */
+/* core/interaction.js - Fixed Probes, Wiring & Straight Lines */
 const Interaction = {
     selectedComp: null, contextComp: null, draggingProbe: null,
     isDragging: false, isPanning: false, lastPanPos: { x: 0, y: 0 },
@@ -42,32 +42,29 @@ const Interaction = {
             Interaction.wireStart = null; Renderer.ghostWire = null; return; 
         }
 
-        // --- FIXED: EASIER PROBE GRABBING ---
-        // Check Scope Probes (Body Hitbox)
+        // 1. CHECK SCOPE PROBES (Tip OR Body)
         if(window.Scope) {
             const hitScope = ['ch1', 'ch2', 'gnd'].find(ch => {
                 const p = window.Scope.probes[ch];
-                // Check dist to tip OR box around body (y-40 to y)
-                return (Math.hypot(x - p.x, y - p.y) < 15) || 
-                       (x > p.x - 15 && x < p.x + 15 && y > p.y - 50 && y < p.y);
+                // Hitbox: +/- 20px X, and from Tip (y) up to Handle (y-50)
+                return (Math.abs(x - p.x) < 20 && y > p.y - 60 && y < p.y + 10);
             });
             if(hitScope) { Interaction.draggingProbe = {type:'scope', id:hitScope}; return; }
         }
 
-        // Check Meter Probes (Body Hitbox)
+        // 2. CHECK METER PROBES (Tip OR Body)
         const hitProbe = ['red', 'black'].find(c => {
             const p = Meter.probes[c];
-            // Allow clicking the big handle (up to 100px above tip)
-            return (x > p.x - 15 && x < p.x + 15 && y > p.y - 100 && y < p.y + 10);
+            // Hitbox: +/- 20px X, and from Tip (y) up to Handle (y-100)
+            return (Math.abs(x - p.x) < 20 && y > p.y - 120 && y < p.y + 10);
         });
         if(hitProbe) { Interaction.draggingProbe = {type:'meter', id:hitProbe}; return; }
-        // ------------------------------------
 
-        // Check Components
+        // 3. CHECK COMPONENTS
         const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
         let targetList = (Interaction.mode === 'break') ? sorted : sorted.reverse(); 
         
-        // Flexible Terminal Check (e.g. Resistor Legs)
+        // Flexible Legs
         let clickedTerm = null;
         if(Interaction.mode === 'interact') {
             for(let c of targetList) {
@@ -89,6 +86,7 @@ const Interaction = {
             }
         });
 
+        // Right Click (Delete)
         if(e.button === 2) {
              const hitWire = Engine.wires.find(w => Interaction.isNearWire(x, y, w));
              if(hitWire) { Engine.removeWire(hitWire); return; }
@@ -110,6 +108,7 @@ const Interaction = {
 
         if(clicked && Interaction.mode === 'fault') { App.openPropertyModal(clicked); return; }
 
+        // WIRING START (If hovering a terminal)
         if(Interaction.mode === 'interact' && Renderer.hoveredTerm) {
             const ht = Renderer.hoveredTerm;
             Interaction.startWiring(ht.comp, ht.term.id, ht.x, ht.y);
@@ -141,7 +140,7 @@ const Interaction = {
         const x = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).x;
         const y = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).y;
 
-        // --- MAGNETIC SNAP & HOVER ---
+        // --- HOVER LOGIC (Restored) ---
         Renderer.hoveredTerm = null;
         if(Interaction.mode === 'interact' && !Interaction.draggingProbe && !Interaction.isDragging && !Interaction.draggingLead) {
             const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
@@ -160,9 +159,8 @@ const Interaction = {
         
         Renderer.hoveredWire = (!Renderer.hoveredTerm && !Interaction.draggingProbe) ? Engine.wires.find(w => Interaction.isNearWire(x, y, w)) : null;
 
-        // --- SNAP CALCULATION ---
-        let snapX = x, snapY = y; 
-        let isSnapped = false;
+        // --- SNAP LOGIC ---
+        let snapX = x, snapY = y; let isSnapped = false;
         if(Interaction.isDragging || Interaction.draggingLead) {
             const boards = Engine.components.filter(c => c.type === 'trackboard');
             for(let b of boards) {
@@ -240,6 +238,7 @@ const Interaction = {
         document.body.style.cursor = "default"; 
     },
 
+    // Straight Line Distance Helper
     distToSegment: (x, y, x1, y1, x2, y2) => {
         const A = x - x1; const B = y - y1;
         const C = x2 - x1; const D = y2 - y1;
@@ -259,6 +258,7 @@ const Interaction = {
         const p1 = Renderer.getTerminalPos(w.startComp, w.startTerm);
         const p2 = Renderer.getTerminalPos(w.endComp, w.endTerm);
         if(!p1 || !p2) return false;
+        // Use Straight Line Distance
         return Interaction.distToSegment(px, py, p1.x, p1.y, p2.x, p2.y) < 8;
     },
 

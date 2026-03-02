@@ -1,9 +1,9 @@
-/* core/engine.js - Fixed Transformer & AC Stability */
+/* core/engine.js - Transformer Logic & Stable AC */
 const ComponentRegistry = {}; 
 
 const Engine = {
     components: [], wires: [], powerOn: false, 
-    liveSet: new Map(), // Tracks Source ID
+    liveSet: new Map(), // Changed to Map to track Source ID
     neutralSet: new Set(),
     lastCalc: 0,
 
@@ -38,38 +38,42 @@ const Engine = {
     getPotential: (compId, termId, mode = 'stable') => {
         const key = `${compId}:${termId}`;
         
-        // 1. If connected to a LIVE source
+        // 1. Is this terminal LIVE?
         if (Engine.liveSet.has(key)) {
+            // 2. Who is powering it?
             const sourceId = Engine.liveSet.get(key);
             const source = Engine.components.find(c => c.id === sourceId);
             
             if(source) {
-                // TRANSFORMER (12V Centre-Tapped)
+                // A. TRANSFORMER (12V)
                 if(source.type === 'transformer_ct') {
+                    // Check if measuring S2 (Negative Phase)
                     const isS2 = (termId === 'S2' || Engine.checkConnection(compId, termId, source.id, 'S2'));
                     
                     if(mode === 'instant') {
-                        const val = 12 * Math.sin(Date.now()/100);
-                        return isS2 ? -val : val; // Anti-phase for Scope
+                        // Sine wave for Scope
+                        const val = 17 * Math.sin(Date.now()/100); // 17V peak ≈ 12V RMS
+                        return isS2 ? -val : val; // Anti-phase
                     } else {
-                        // For Meter: S1=+12, S2=-12. 
-                        // Measuring S1-CT = 12. Measuring S1-S2 = 12 - (-12) = 24V.
+                        // Stable RMS for Meter (Return DC equivalent for simple math)
+                        // S1=+12V, S2=-12V relative to CT
                         return isS2 ? -12 : 12; 
                     }
                 }
 
-                // AC GENERATOR (230V)
+                // B. AC GENERATOR (230V)
                 if(source.type === 'ac_source') {
-                    if(mode === 'instant') return 230 * Math.sin(Date.now()/100);
-                    return 230; // Stable reading for meter
+                    if(mode === 'instant') return 325 * Math.sin(Date.now()/100); // 325V peak ≈ 230V RMS
+                    return 230; // Stable RMS
                 }
 
-                // DC SOURCES
+                // C. DC SOURCES
                 if(source.type === 'psu_variable') return parseFloat(source.state.value) || 12;
                 if(source.type === 'battery_9v' || source.type === 'battery_clip') return 9;
                 if(source.type === 'plc_psu') return 24;
             }
-            return 230; // Default fallback
+            // Default Fallback
+            return 230; 
         }
         return 0; // Neutral/Ground
     },
@@ -81,7 +85,6 @@ const Engine = {
         return def.getInternalPaths ? def.getInternalPaths(comp.state) : [];
     },
 
-    // Connectivity Checker for Meter continuity
     checkConnection: (c1, t1, c2, t2) => {
         if(!c1 || !c2) return false;
         if(c1 === c2 && t1 === t2) return true;
@@ -144,6 +147,7 @@ const Engine = {
             changed = false;
             
             const propagate = (from, to) => {
+                // If 'from' is live, pass its Source ID to 'to'
                 if(Engine.liveSet.has(from) && !Engine.liveSet.has(to)) {
                     Engine.liveSet.set(to, Engine.liveSet.get(from)); 
                     changed = true;
@@ -163,19 +167,18 @@ const Engine = {
             });
 
             Engine.components.forEach(c => {
-                // Internal Paths
                 Engine.getPaths(c).forEach(p => {
                     const s = `${c.id}:${p[0]}`; const e = `${c.id}:${p[1]}`;
                     propagate(s, e); propagate(e, s);
                     propagateNeutral(s, e); propagateNeutral(e, s);
                 });
 
-                // --- TRANSFORMER LOGIC ---
-                // If Primary (P1-P2) has power (Live & Neutral)
+                // --- TRANSFORMER GENERATION LOGIC ---
+                // If Primary (P1-P2) is energized
                 if(c.type === 'transformer_ct') {
                     if(Engine.liveSet.has(`${c.id}:P1`) && (Engine.neutralSet.has(`${c.id}:P2`) || Engine.liveSet.has(`${c.id}:P2`))) {
-                        // Activate Secondary
-                        // We tag them with the Transformer ID so getPotential knows who generated the power
+                        // Turn ON the Secondary side
+                        // Note: We register the Transformer ITSELF as the source ID
                         if(!Engine.liveSet.has(`${c.id}:S1`)) { Engine.liveSet.set(`${c.id}:S1`, c.id); changed = true; }
                         if(!Engine.liveSet.has(`${c.id}:S2`)) { Engine.liveSet.set(`${c.id}:S2`, c.id); changed = true; }
                         if(!Engine.neutralSet.has(`${c.id}:CT`)) { Engine.neutralSet.add(`${c.id}:CT`); changed = true; }

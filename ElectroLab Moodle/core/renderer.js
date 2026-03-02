@@ -1,4 +1,4 @@
-/* core/renderer.js - Straight Wires & X-Ray */
+/* core/renderer.js - Straight Wires */
 const Renderer = {
     canvas: null, ctx: null, ghostWire: null, wiresOnTop: false, 
     hoveredTerm: null, hoveredWire: null, 
