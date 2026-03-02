@@ -59,9 +59,10 @@ window.Scope = {
     update: () => {
         if(!window.Scope.on || !Engine.powerOn) return;
         
-        const vGnd = window.Scope.probes.gnd.compId ? Engine.getPotential(window.Scope.probes.gnd.compId, window.Scope.probes.gnd.termId) : 0;
-        const v1 = window.Scope.probes.ch1.compId ? Engine.getPotential(window.Scope.probes.ch1.compId, window.Scope.probes.ch1.termId) - vGnd : 0;
-        const v2 = window.Scope.probes.ch2.compId ? Engine.getPotential(window.Scope.probes.ch2.compId, window.Scope.probes.ch2.termId) - vGnd : 0;
+        // Pass 'true' or 'instant' to get the sine wave
+        const vGnd = window.Scope.probes.gnd.compId ? Engine.getPotential(window.Scope.probes.gnd.compId, window.Scope.probes.gnd.termId, 'instant') : 0;
+        const v1 = window.Scope.probes.ch1.compId ? Engine.getPotential(window.Scope.probes.ch1.compId, window.Scope.probes.ch1.termId, 'instant') - vGnd : 0;
+        const v2 = window.Scope.probes.ch2.compId ? Engine.getPotential(window.Scope.probes.ch2.compId, window.Scope.probes.ch2.termId, 'instant') - vGnd : 0;
 
         window.Scope.data.ch1.push(v1);
         window.Scope.data.ch2.push(v2);

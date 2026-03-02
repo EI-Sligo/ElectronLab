@@ -1,4 +1,4 @@
-/* core/renderer.js - X-Ray Mode & Scope Probes */
+/* core/renderer.js - Straight Wires & X-Ray */
 const Renderer = {
     canvas: null, ctx: null, ghostWire: null, wiresOnTop: false, 
     hoveredTerm: null, hoveredWire: null, 
@@ -103,20 +103,25 @@ const Renderer = {
                     const isLive = Engine.isLive(w.startComp, w.startTerm) || Engine.isLive(w.endComp, w.endTerm);
                     ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.2)"; ctx.shadowBlur = 3 / Renderer.camera.zoom; ctx.shadowOffsetY = 2 / Renderer.camera.zoom;
                     if(isLive && Engine.powerOn) { ctx.shadowColor = w.color; ctx.shadowBlur = 8 / Renderer.camera.zoom; }
-                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.bezierCurveTo(p1.x, p1.y + 50, p2.x, p2.y + 50, p2.x, p2.y);
+                    
+                    // STRAIGHT LINE
+                    ctx.beginPath(); 
+                    ctx.moveTo(p1.x, p1.y); 
+                    ctx.lineTo(p2.x, p2.y);
+                    
                     ctx.lineWidth = Math.max(1, 3 / Math.sqrt(Renderer.camera.zoom)); ctx.strokeStyle = w.color; ctx.lineCap = "round"; ctx.stroke();
                     if(Renderer.hoveredWire === w) { ctx.shadowColor = "white"; ctx.shadowBlur = 10; ctx.lineWidth += 2; ctx.stroke(); }
                     ctx.shadowColor = "transparent"; ctx.lineWidth = ctx.lineWidth / 4; ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.stroke(); ctx.restore();
                 }
             });
             if(Renderer.ghostWire) {
-                const g = Renderer.ghostWire; ctx.beginPath(); ctx.moveTo(g.x1, g.y1); ctx.bezierCurveTo(g.x1, g.y1 + 50, g.x2, g.y2 + 50, g.x2, g.y2);
+                const g = Renderer.ghostWire; 
+                ctx.beginPath(); ctx.moveTo(g.x1, g.y1); ctx.lineTo(g.x2, g.y2); // Straight ghost wire
                 ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2 / Renderer.camera.zoom; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
             }
         };
 
         const drawComponents = () => {
-            // 1. Sort: Trackboard (at bottom), everything else on top
             const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
 
             sorted.forEach(comp => {
@@ -128,19 +133,11 @@ const Renderer = {
                     ctx.translate(comp.w/2, comp.h/2); ctx.rotate(angle); ctx.translate(-comp.w/2, -comp.h/2);
                 }
 
-                // --- X-RAY LOGIC ---
-                // If "Break Tracks" mode is on, make non-stripboard components transparent
                 if(typeof Interaction !== 'undefined' && Interaction.mode === 'break') {
-                    if(comp.type !== 'trackboard') {
-                        ctx.globalAlpha = 0.2; // 20% Opacity (Ghost)
-                    }
+                    if(comp.type !== 'trackboard') ctx.globalAlpha = 0.2; 
                 }
-                // -------------------
 
                 if(def.render) def.render(ctx, comp.state, Renderer.tools);
-                
-                // Keep Alpha low for terminals too, or reset if you want them solid. 
-                // Keeping it low is better to see the track behind the terminal.
                 
                 if(def.terminals) {
                     def.terminals.forEach(t => {
@@ -180,7 +177,6 @@ const Renderer = {
             ctx.restore();
         }
 
-        // DRAW OSCILLOSCOPE PROBES (High Visibility)
         if(window.Scope) window.Scope.drawProbes(ctx);
 
         Renderer.drawProbes(ctx); requestAnimationFrame(Renderer.loop);

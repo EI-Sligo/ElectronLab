@@ -61,11 +61,13 @@ const Meter = {
         // 2. VOLTAGE MODE (V DC/AC)
         if(Meter.mode === 'volts') {
             if(!Engine.powerOn) { el.innerText = "0.00 V"; return; }
-            const v1 = Engine.getPotential(p1.compId, p1.termId);
+            
+            // Default mode is 'stable', so we don't need to pass 'instant'
+            const v1 = Engine.getPotential(p1.compId, p1.termId); 
             const v2 = Engine.getPotential(p2.compId, p2.termId);
             const diff = Math.abs(v1 - v2);
             el.innerText = diff.toFixed(2) + " V";
-        } 
+        }
         
         // 3. RESISTANCE MODE (Ohms)
         else if(Meter.mode === 'ohms') {
