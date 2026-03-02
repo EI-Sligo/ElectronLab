@@ -137,64 +137,88 @@ const Interaction = {
 
     handleMove: (e) => {
         if(Interaction.isPanning) {
-            Renderer.camera.x += e.clientX - Interaction.lastPanPos.x; Renderer.camera.y += e.clientY - Interaction.lastPanPos.y;
-            Interaction.lastPanPos = { x: e.clientX, y: e.clientY }; document.body.style.cursor = "grabbing"; return;
+            Renderer.camera.x += e.clientX - Interaction.lastPanPos.x; 
+            Renderer.camera.y += e.clientY - Interaction.lastPanPos.y;
+            Interaction.lastPanPos = { x: e.clientX, y: e.clientY }; 
+            document.body.style.cursor = "grabbing"; return;
         }
 
         const rect = document.getElementById('simCanvas').getBoundingClientRect();
         const x = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).x;
         const y = Renderer.screenToWorld(e.clientX - rect.left, e.clientY - rect.top).y;
 
+        // --- MAGNETIC SNAP LOGIC ---
+        let snapX = x, snapY = y; // Default to mouse pos
+        let isSnapped = false;
+
+        // Only snap if we are dragging a component or lead
+        if(Interaction.isDragging || Interaction.draggingLead) {
+            const boards = Engine.components.filter(c => c.type === 'trackboard');
+            for(let b of boards) {
+                const def = ComponentRegistry['trackboard'];
+                for(let t of def.terminals) {
+                    const bx = b.x + t.x; const by = b.y + t.y;
+                    // Check distance (25px snap radius)
+                    if(Math.hypot(x - bx, y - by) < 25) {
+                        snapX = bx; snapY = by;
+                        isSnapped = true;
+                        break; 
+                    }
+                }
+                if(isSnapped) break;
+            }
+        }
+
+        // 1. DRAGGING A LEG (Resistor, LED, etc.)
         if(Interaction.draggingLead) {
             const c = Interaction.draggingLead.c;
-            const sx = Math.round(x/18)*18;
-            const sy = Math.round(y/18)*18;
-            const dx = sx - c.x;
-            const dy = sy - c.y;
-            c.state.lead2 = { x: dx, y: dy };
+            // If snapped, use hole pos. If not, use grid-snapped mouse pos.
+            const targetX = isSnapped ? snapX : Math.round(x/18)*18;
+            const targetY = isSnapped ? snapY : Math.round(y/18)*18;
+            
+            c.state.lead2 = { x: targetX - c.x, y: targetY - c.y };
             return;
         }
 
-        Renderer.hoveredTerm = null;
-        if(Interaction.mode === 'interact' && !Interaction.draggingProbe) {
-            const sorted = [...Engine.components].sort((a, b) => (a.type === 'trackboard' ? -1 : 1) - (b.type === 'trackboard' ? -1 : 1));
-            sorted.forEach(c => {
-                const def = ComponentRegistry[c.type];
-                if(def.terminals) {
-                    def.terminals.forEach(t => {
-                        const absPos = Renderer.getTerminalPos(c.id, t.id);
-                        if(absPos && Math.hypot(x - absPos.x, y - absPos.y) < 15) {
-                            Renderer.hoveredTerm = { comp: c, term: t, x: absPos.x, y: absPos.y };
-                        }
-                    });
-                }
-            });
-        }
-
+        // 2. DRAGGING PROBES
         if(Interaction.draggingProbe) {
             const dp = Interaction.draggingProbe;
-            let p;
-            if(dp.type === 'meter') p = Meter.probes[dp.id];
-            if(dp.type === 'scope') p = window.Scope.probes[dp.id];
+            let p = (dp.type === 'meter') ? Meter.probes[dp.id] : window.Scope.probes[dp.id];
             
-            p.x = x; p.y = y; p.compId = null; p.termId = null;
+            // Probes stick to components
+            p.compId = null; p.termId = null;
+            let bestDist = 20; // Snap radius for probes
+            
             Engine.components.forEach(c => {
                 const def = ComponentRegistry[c.type];
                 if(def.terminals) {
                     def.terminals.forEach(t => {
-                        const absPos = Renderer.getTerminalPos(c.id, t.id);
-                        if(absPos && Math.hypot(x - absPos.x, y - absPos.y) < 20) {
-                            p.x = absPos.x; p.y = absPos.y; p.compId = c.id; p.termId = t.id;
+                        const pos = Renderer.getTerminalPos(c.id, t.id);
+                        const dist = Math.hypot(x - pos.x, y - pos.y);
+                        if(dist < bestDist) {
+                            p.x = pos.x; p.y = pos.y;
+                            p.compId = c.id; p.termId = t.id;
+                            bestDist = dist;
                         }
                     });
                 }
             });
+            if(!p.compId) { p.x = x; p.y = y; } // If no snap, follow mouse
             return;
         }
 
+        // 3. DRAGGING COMPONENT BODY
         if(Interaction.isDragging && Interaction.selectedComp) {
-            Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
-            Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
+            // Calculate relative offset based on snap
+            // We want the part under the mouse to snap, so we adjust the body x/y
+            if(isSnapped) {
+                // This is complex for bodies, simplified: just snap body origin to grid
+                Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
+                Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
+            } else {
+                Interaction.selectedComp.x = Math.round((x - Interaction.dragOffset.x)/18)*18;
+                Interaction.selectedComp.y = Math.round((y - Interaction.dragOffset.y)/18)*18;
+            }
         }
 
         if(Interaction.wireStart) Renderer.ghostWire = { x1: Interaction.wireStart.x, y1: Interaction.wireStart.y, x2: x, y2: y };

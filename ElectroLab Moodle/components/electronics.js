@@ -385,16 +385,28 @@ Engine.register({
     render: (ctx, state, tools) => {
         const w = OFFSET*2 + (BOARD_COLS-1)*SPACING; const h = OFFSET*2 + (BOARD_ROWS-1)*SPACING;
         tools.plasticRect(ctx, 0, 0, w, h, "#fde68a"); 
+        
         for(let r=0; r<BOARD_ROWS; r++) {
             const ry = OFFSET + r * SPACING;
-            ctx.fillStyle = "#b45309"; ctx.fillRect(10, ry - 6, w - 20, 12);
+            
+            // NEW: Draw Faint Copper Track Line
+            ctx.strokeStyle = "rgba(180, 83, 9, 0.3)"; // Faint copper
+            ctx.lineWidth = 14; // Wide track
+            ctx.beginPath(); ctx.moveTo(OFFSET, ry); ctx.lineTo(w - OFFSET, ry); ctx.stroke();
+
+            // Original Darker Strip (keep this for contrast if you like, or remove)
+            ctx.fillStyle = "rgba(180, 83, 9, 0.2)"; ctx.fillRect(10, ry - 6, w - 20, 12);
+
             // Draw cuts
             const broken = state.broken || {};
             for(let c=0; c<BOARD_COLS-1; c++) {
                 if(broken[`${r}_${c}`]) {
                     const cx = OFFSET + c * SPACING + (SPACING/2);
-                    ctx.fillStyle = "#fde68a"; ctx.fillRect(cx - 5, ry - 7, 10, 14);
-                    ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx-4, ry-4); ctx.lineTo(cx+4, ry+4); ctx.moveTo(cx-4, ry+4); ctx.lineTo(cx+4, ry-4); ctx.stroke();
+                    // Draw Cut Mark
+                    ctx.fillStyle = "#fde68a"; ctx.fillRect(cx - 6, ry - 7, 12, 14); // Erase track
+                    ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; // Red Cross
+                    ctx.beginPath(); ctx.moveTo(cx-4, ry-4); ctx.lineTo(cx+4, ry+4); 
+                    ctx.moveTo(cx+4, ry-4); ctx.lineTo(cx-4, ry+4); ctx.stroke();
                 }
             }
         }
@@ -404,5 +416,26 @@ Engine.register({
             }
         }
         tools.text(ctx, 'Stripboard', w/2, 10, '#b45309', 10, "bold");
+    }
+});
+// PCB MOUNT 9V CLIP
+Engine.register({
+    type: 'battery_clip', label: '9V PCB Clip', role: 'source', 
+    size: { w: 40, h: 60 },
+    terminals: [ 
+        {id:'Pos', x:20, y:10}, // Top Pin
+        {id:'Neg', x:20, y:46}  // Bottom Pin (36px spacing = 1 row gap)
+    ],
+    getInternalPaths: () => [],
+    render: (ctx, state, tools) => {
+        // Plastic Body
+        tools.plasticRect(ctx, 0, 0, 40, 60, "#1f2937");
+        // Battery Snaps
+        ctx.fillStyle = "#cbd5e1"; 
+        ctx.beginPath(); ctx.arc(20, 15, 6, 0, Math.PI*2); ctx.fill(); // Circular snap
+        ctx.beginPath(); for(let i=0; i<6; i++) { ctx.lineTo(20 + 8*Math.cos(i*Math.PI/3), 46 + 8*Math.sin(i*Math.PI/3)); } ctx.fill(); // Hex snap
+        
+        tools.text(ctx, '+', 10, 15, '#ef4444', 14, "bold");
+        tools.text(ctx, '9V', 20, 30, '#fff', 10);
     }
 });
